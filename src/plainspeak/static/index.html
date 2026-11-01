@@ -1,0 +1,1666 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#050A14">
+  <meta name="description" content="PlainSpeak — AI-powered care intelligence. Bridging clinical expertise and everyday understanding, from the consultation room all the way home.">
+  <meta property="og:title" content="PlainSpeak — Care Intelligence">
+  <meta property="og:description" content="Turn discharge instructions into grounded, voice-accessible care guidance. Clinician-approved. AI-assisted. Always clear.">
+  <meta property="og:type" content="website">
+  <title>PlainSpeak — Care Intelligence</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Manrope:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+  <!-- Top API progress bar -->
+  <div class="tpb" id="top-progress-bar" aria-hidden="true">
+    <div class="tpb-fill" id="tpb-fill"></div>
+  </div>
+
+  <!-- Page loading overlay -->
+  <div id="app-loading" class="app-loading" aria-live="polite" aria-label="Loading PlainSpeak">
+    <div class="loading-inner">
+      <svg class="loading-logo" viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M6 8.5A4.5 4.5 0 0 1 10.5 4h11A4.5 4.5 0 0 1 26 8.5v8a4.5 4.5 0 0 1-4.5 4.5H15l-6.5 5v-5.4A4.5 4.5 0 0 1 6 16.5z"/>
+        <path d="M11 12h10M11 16h6"/>
+      </svg>
+      <span class="loading-wordmark">PlainSpeak</span>
+      <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- Neural network canvas - behind everything -->
+  <canvas id="neural-bg" aria-hidden="true"></canvas>
+
+  <!-- Cursor spotlight -->
+  <div class="cursor-spotlight" aria-hidden="true"></div>
+
+  <!-- Ambient gradient orbs -->
+  <div class="bg-mesh" aria-hidden="true">
+    <div class="bg-orb orb-v"></div>
+    <div class="bg-orb orb-t"></div>
+    <div class="bg-orb orb-p"></div>
+  </div>
+
+  <div class="sidebar-backdrop" id="sidebar-backdrop" aria-hidden="true"></div>
+  <div class="app-shell">
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#" aria-label="PlainSpeak home">
+        <span class="brand-mark">
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <path d="M6 8.5A4.5 4.5 0 0 1 10.5 4h11A4.5 4.5 0 0 1 26 8.5v8a4.5 4.5 0 0 1-4.5 4.5H15l-6.5 5v-5.4A4.5 4.5 0 0 1 6 16.5z"/>
+            <path d="M11 12h10M11 16h6"/>
+          </svg>
+        </span>
+        <span>
+          <strong>PlainSpeak</strong>
+          <small>CARE INTELLIGENCE</small>
+        </span>
+      </a>
+
+      <div class="workspace-label">ACTIVE CASE</div>
+      <div class="case-card" id="sidebar-case-card">
+        <span class="case-icon">✳</span>
+        <div>
+          <strong><span data-patient="possessive">Patient's</span> care journey</strong>
+          <small id="sidebar-case-id" class="case-id-label">Loading…</small>
+        </div>
+        <span class="live-dot"></span>
+      </div>
+
+      <div class="sidebar-label">YOUR WORKFLOW</div>
+      <nav class="side-nav" aria-label="Main navigation">
+        <button class="tab active" data-tab="doctor">
+          <span class="nav-icon">◉</span>
+          <span data-i18n="nav-clinic">Care @ Clinic</span>
+          <span class="nav-count">01</span>
+        </button>
+        <button class="tab" data-tab="caregiver">
+          <span class="nav-icon">♡</span>
+          <span data-i18n="nav-home">Care @ Home</span>
+          <span class="nav-count">02</span>
+          <span class="tab-notif" id="notif-caregiver" hidden></span>
+        </button>
+        <button class="tab" data-tab="report">
+          <span class="nav-icon">▤</span>
+          <span data-i18n="nav-overview">Care Overview</span>
+          <span class="nav-count">03</span>
+        </button>
+      </nav>
+
+      <!-- New patient + case switcher -->
+      <div class="sidebar-label">
+        PATIENT CASES
+        <button type="button" class="new-case-btn" id="btn-new-case" title="New patient case">+</button>
+      </div>
+      <div id="case-list" class="case-list">
+        <p class="hist-empty">Loading cases…</p>
+      </div>
+
+      <!-- Demo seed button -->
+      <button type="button" class="demo-seed-btn" id="btn-demo-seed" title="Load a fully-approved demo patient case — no API key needed">
+        <span class="demo-seed-icon">▷</span>
+        <span class="demo-seed-text">
+          <strong>Load Demo Patient</strong>
+          <small>Emily Carter · post-surgery</small>
+        </span>
+        <span class="demo-seed-badge">DEMO</span>
+      </button>
+
+      <div class="sidebar-label hist-sidebar-label">
+        SESSION HISTORY
+        <span id="hist-badge" class="hist-badge">0</span>
+      </div>
+      <div id="history-list" class="sidebar-hist-list">
+        <p class="hist-empty">Approve a care plan to save it here.</p>
+      </div>
+
+      <div class="sidebar-bottom">
+        <div class="privacy-card">
+          <span class="privacy-icon">✦</span>
+          <div>
+            <strong>People first. Always.</strong>
+            <p>Instructions stay grounded in the approved care plan. Uncertainty is made visible.</p>
+          </div>
+        </div>
+        <div class="profile-row">
+          <div class="avatar">PS</div>
+          <div>
+            <strong>PlainSpeak</strong>
+            <small id="clinician-name-display">Set clinician name ›</small>
+          </div>
+          <span class="profile-dots" id="btn-set-clinician" title="Set clinician name" style="cursor:pointer">···</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ===== MAIN ===== -->
+    <div class="main-shell">
+      <header class="topbar">
+        <!-- Compliance strip -->
+        <div class="topbar-compliance" role="complementary" aria-label="Platform compliance">
+          <div class="tc-badges">
+            <span class="tc-badge"><span class="tc-dot"></span>HIPAA</span>
+            <span class="tc-badge"><span class="tc-dot"></span>TLS 1.3</span>
+            <span class="tc-badge"><span class="tc-dot"></span>AES-256</span>
+            <span class="tc-badge tc-hide-sm"><span class="tc-dot"></span>SOC 2</span>
+            <span class="tc-badge tc-hide-sm"><span class="tc-dot"></span>GDPR</span>
+          </div>
+          <span class="tc-status" id="system-status"><span class="tc-live"></span><span class="tc-status-text">All systems operational</span></span>
+        </div>
+        <!-- Main topbar row -->
+        <div class="topbar-main">
+          <button type="button" class="sidebar-toggle-btn" id="btn-sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false">
+            <span></span><span></span><span></span>
+          </button>
+          <div class="breadcrumbs">
+            <span>Workspace</span><b>/</b>
+            <strong id="crumb-current">Care @ Clinic</strong>
+          </div>
+          <button type="button" class="cmd-trigger-btn" id="btn-cmd-palette" aria-label="Open command palette (Ctrl+K)">
+            <span class="cmd-trigger-icon">⌕</span>
+            <span class="cmd-trigger-hint">Search patients, actions…</span>
+            <kbd class="cmd-trigger-kbd">⌘K</kbd>
+          </button>
+          <div class="topbar-right">
+            <button type="button" class="ir-toggle-topbar-btn" id="btn-ir-toggle" title="Toggle intelligence panel" aria-pressed="false">⊞</button>
+            <!-- Notification bell -->
+            <div class="notif-wrap" id="notif-wrap">
+              <button type="button" class="notif-btn" id="btn-notif" aria-label="Notifications" aria-expanded="false">
+                <svg class="notif-bell-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M10 2a6 6 0 0 0-6 6v3.5l-1.5 2A.5.5 0 0 0 3 14.5h14a.5.5 0 0 0 .5-.5v-.5L16 11.5V8a6 6 0 0 0-6-6z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+                  <path d="M8 15.5a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+                <span class="notif-count" id="notif-count" hidden>0</span>
+              </button>
+              <div class="notif-drawer" id="notif-drawer" hidden aria-label="Notifications panel">
+                <div class="nd-header">
+                  <span class="nd-title">Notifications</span>
+                  <button type="button" class="nd-clear-btn" id="btn-notif-clear">Clear all</button>
+                </div>
+                <div class="nd-list" id="nd-list">
+                  <p class="nd-empty">You're all caught up.</p>
+                </div>
+              </div>
+            </div>
+            <button type="button" class="theme-toggle-btn" onclick="window.toggleTheme?.()" title="Switch to light mode">☀</button>
+            <div class="lang-switcher" role="group" aria-label="Language">
+              <button type="button" class="lang-btn active" data-lang="en">EN</button>
+              <span class="lang-sep">|</span>
+              <button type="button" class="lang-btn" data-lang="de">DE</button>
+            </div>
+            <span class="secure-label"><span class="secure-dot"></span> SECURE</span>
+            <span class="ai-badge" id="ai-badge" title="Active AI backend">
+              <span class="ai-badge-dot"></span>
+              <span id="ai-badge-text">AI</span>
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <!-- ===== CASE CONTEXT BAR ===== -->
+      <div class="case-context-bar" id="case-context-bar">
+        <div class="ccb-patient">
+          <div class="ccb-avatar" data-patient="initial">P</div>
+          <div class="ccb-info">
+            <span class="ccb-name" data-patient="full">Patient not yet identified</span>
+            <span class="ccb-caseid" id="ccb-case-id">—</span>
+          </div>
+        </div>
+        <div class="ccb-pipeline">
+          <div class="ccb-pipe-step" id="ccb-p1">
+            <span class="ccb-pipe-n">01</span>
+            <span class="ccb-pipe-label">Consultation</span>
+          </div>
+          <div class="ccb-pipe-track"><div class="ccb-pipe-fill" id="ccb-fill-1"></div></div>
+          <div class="ccb-pipe-step" id="ccb-p2">
+            <span class="ccb-pipe-n">02</span>
+            <span class="ccb-pipe-label">Review</span>
+          </div>
+          <div class="ccb-pipe-track"><div class="ccb-pipe-fill" id="ccb-fill-2"></div></div>
+          <div class="ccb-pipe-step" id="ccb-p3">
+            <span class="ccb-pipe-n">03</span>
+            <span class="ccb-pipe-label">At-home care</span>
+          </div>
+        </div>
+        <div class="ccb-right">
+          <span class="ccb-state-pill" id="ccb-state-pill">loading…</span>
+          <button type="button" class="ccb-new-btn" id="ccb-new-case-btn">+ New case</button>
+        </div>
+      </div>
+
+      <div id="error" class="error" hidden></div>
+
+      <!-- hidden fallbacks required by consultation.js -->
+      <button id="btn-create" hidden style="display:none!important"></button>
+
+      <main>
+
+        <!-- ===== HERO ===== -->
+        <section class="page-intro">
+          <div class="intro-text">
+            <div class="eyebrow"><span class="eyebrow-line"></span><span data-i18n="eyebrow-hero"> AI-POWERED CARE INTELLIGENCE</span></div>
+            <h1 id="page-title" class="gradient-text" data-i18n-html="page-title">Care, made <em>clearer.</em></h1>
+            <p class="page-subtitle" data-i18n="page-subtitle">Bridging clinical expertise and everyday understanding — from the consultation room all the way home.</p>
+            <div class="hero-tags">
+              <span class="hero-tag"><span class="htag-dot green-dot"></span><span data-i18n="tag-clinician">Clinician-approved</span></span>
+              <span class="hero-tag"><span class="htag-dot violet-dot"></span><span data-i18n="tag-ai">AI-assisted</span></span>
+              <span class="hero-tag"><span class="htag-dot mint-dot"></span><span data-i18n="tag-evidence">Evidence-linked</span></span>
+            </div>
+          </div>
+          <div class="intro-decoration" aria-hidden="true">
+            <!-- Floating health vitals -->
+            <div class="vital-float vf1" style="--dur:5.2s;--delay:0s">
+              <span class="vf-icon" style="color:#F2637A">♥</span>
+              <span class="vf-val" id="vf-bpm">72</span>
+              <span class="vf-label">BPM</span>
+            </div>
+            <div class="vital-float vf2" style="--dur:4.7s;--delay:1.6s">
+              <span class="vf-icon" style="color:#0DD6A8">◎</span>
+              <span class="vf-val"><span id="vf-spo2">98</span><small>%</small></span>
+              <span class="vf-label">SpO2</span>
+            </div>
+            <div class="vital-float vf3" style="--dur:6.1s;--delay:0.9s">
+              <span class="vf-icon" style="color:#8B7EF5">↑</span>
+              <span class="vf-val" id="vf-bp">120</span>
+              <span class="vf-label">SYS mmHg</span>
+            </div>
+
+            <!-- AI Sphere focal point -->
+            <div class="ai-sphere-wrap">
+              <div class="ai-ring ai-ring-1"></div>
+              <div class="ai-ring ai-ring-2"></div>
+              <div class="ai-orb-shell"><div class="ai-orb-core"></div></div>
+              <div class="ekg-box">
+                <svg class="ekg-svg" viewBox="0 0 280 70" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="ekgGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#8B7EF5" stop-opacity="0"/>
+                      <stop offset="30%" stop-color="#8B7EF5" stop-opacity="1"/>
+                      <stop offset="70%" stop-color="#0DD6A8" stop-opacity="1"/>
+                      <stop offset="100%" stop-color="#0DD6A8" stop-opacity="0"/>
+                    </linearGradient>
+                  </defs>
+                  <path class="ekg-path" d="M0,35 L60,35 L74,8 L88,62 L102,18 L116,52 L130,35 L280,35" stroke="url(#ekgGrad)"/>
+                </svg>
+                <div class="ekg-rings">
+                  <div class="ekg-ring r1"></div>
+                  <div class="ekg-ring r2"></div>
+                  <div class="ekg-ring r3"></div>
+                  <div class="ekg-core"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== HERO STATS STRIP ===== -->
+        <div class="hero-stats">
+          <div class="hstat">
+            <div class="hstat-top"><span class="hstat-n hstat-big" data-target="98">0</span><span>%</span></div>
+            <small data-i18n="stat-accuracy">Accuracy</small>
+          </div>
+          <div class="hstat-div"></div>
+          <div class="hstat">
+            <div class="hstat-top"><span class="hstat-n hstat-big" data-target="3">0</span><span>x</span></div>
+            <small data-i18n="stat-faster">Faster</small>
+          </div>
+          <div class="hstat-div"></div>
+          <div class="hstat">
+            <div class="hstat-top"><span class="hstat-n hstat-big" data-target="24">0</span><span>/7</span></div>
+            <small data-i18n="stat-always">Always On</small>
+          </div>
+        </div>
+
+        <!-- ===== DOCTOR TAB ===== -->
+        <section id="tab-doctor" class="panel active">
+          <div class="workflow-strip">
+            <div class="workflow-step active" aria-current="step">
+              <span>01</span>
+              <div><strong data-i18n="step-1">Capture</strong><small data-i18n="step-1-sub">Conversation + document</small></div>
+            </div>
+            <span class="step-connector"></span>
+            <div class="workflow-step">
+              <span>02</span>
+              <div><strong data-i18n="step-2">Review</strong><small data-i18n="step-2-sub">Check what matters</small></div>
+            </div>
+            <span class="step-connector"></span>
+            <div class="workflow-step">
+              <span>03</span>
+              <div><strong data-i18n="step-3">Approve</strong><small data-i18n="step-3-sub">Clinician in control</small></div>
+            </div>
+          </div>
+
+          <div class="section-heading">
+            <div>
+              <div class="eyebrow" data-i18n="workspace-kicker">CARE TEAM WORKSPACE</div>
+              <h2 data-i18n="workspace-h2">Build a shared understanding</h2>
+              <p data-i18n="workspace-p">Bring spoken instructions and the written plan together before care continues at home.</p>
+            </div>
+            <button id="btn-reset" class="button-quiet"><span>↻</span> New case</button>
+          </div>
+
+          <div class="content-grid">
+            <div class="primary-column">
+
+              <!-- Card 01: Consultation -->
+              <article class="card card-featured">
+                <div class="card-heading">
+                  <div class="step-icon violet">01</div>
+                  <div class="card-heading-copy">
+                    <div class="card-kicker" data-i18n="c1-kicker">LIVE CONSULTATION</div>
+                    <h3 data-i18n="c1-title">Capture the conversation</h3>
+                    <p data-i18n="c1-desc">Transcribe the clinician–patient discussion with patient consent.</p>
+                  </div>
+                  <span class="feature-pill"><span class="pulse-dot"></span><span data-i18n="c1-pill"> VOICE INPUT</span></span>
+                </div>
+                <label class="consent-line">
+                  <input type="checkbox" id="consult-consent">
+                  <span class="custom-check"></span>
+                  <span data-i18n="c1-consent">Both participants consent to transcription of this consultation.</span>
+                </label>
+                <div class="control-row">
+                  <label class="field-label" for="consult-language" data-i18n="c1-lang-label">LANGUAGE</label>
+                  <select id="consult-language" aria-label="Consultation language">
+                    <option value="en">English</option>
+                    <option value="de">German</option>
+                    <option value="de,en">German + English</option>
+                  </select>
+                  <span class="control-spacer"></span>
+                  <button id="btn-consult-start" class="button-primary"><span>◉</span> Start consultation</button>
+                  <button id="btn-consult-stop" class="button-secondary" disabled>End &amp; save</button>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                  <div id="consult-status" class="muted status-line" role="status">Ready when you are.</div>
+                  <span id="record-timer" class="record-timer" aria-live="polite">
+                    <span class="rtimer-dot"></span>
+                    <span class="rtimer-val">00:00</span>
+                  </span>
+                </div>
+                <canvas id="waveform-canvas" aria-hidden="true"></canvas>
+                <div id="consult-interim" class="interim" aria-live="polite"></div>
+                <div id="consult-speakers"></div>
+                <div id="consult-transcript" class="consult-transcript" aria-live="polite"></div>
+                <div id="consult-recovery"></div>
+                <button id="btn-clear-transcript" class="button-secondary danger" hidden>✕ Clear transcript</button>
+                <details class="fallback-details">
+                  <summary>Upload a written transcript PDF</summary>
+                  <p class="muted">Import a transcript written up elsewhere. Start each turn with a speaker label such as <code>Clinician:</code>, <code>Patient:</code> or <code>Speaker 1:</code>. A leading timestamp like <code>[00:01:12]</code> is kept.</p>
+                  <div class="upload-zone">
+                    <div class="upload-icon">↑</div>
+                    <div class="upload-copy"><strong>Choose a transcript PDF</strong><span>PDF document</span></div>
+                    <input type="file" id="transcript-file" accept="application/pdf">
+                    <button id="btn-transcript-pdf" class="button-secondary">Import transcript</button>
+                  </div>
+                </details>
+                <details class="fallback-details">
+                  <summary>Use manual transcript entry</summary>
+                  <p class="muted">Enter one line at a time if live audio is unavailable.</p>
+                  <div class="row">
+                    <select id="manual-speaker" aria-label="Manual speaker">
+                      <option value="0">Clinician</option>
+                      <option value="1">Patient</option>
+                    </select>
+                    <input id="manual-transcript" type="text" placeholder="Enter one spoken line">
+                    <button id="btn-manual-transcript" class="button-secondary">Save line</button>
+                  </div>
+                </details>
+                <details class="fallback-details">
+                  <summary>Paste full conversation — auto-split speakers</summary>
+                  <p class="muted">Paste the entire dialogue below. Start each line with a label like <code>Doctor:</code> or <code>Patient:</code> for automatic assignment. Without labels, lines are split by question/answer pattern, then alternating turns.</p>
+                  <textarea id="full-convo-input" class="full-convo-textarea" rows="6" placeholder="Doctor: Hello, how are you feeling today?&#10;Patient: I've been having headaches since last week.&#10;Doctor: When did they start?&#10;Patient: About three days ago, mostly in the morning."></textarea>
+                  <div class="row" style="margin-top:8px">
+                    <button type="button" id="btn-parse-convo" class="button-secondary"><span>✦</span> Detect speakers</button>
+                    <button type="button" id="btn-save-parsed" class="button-primary" hidden><span>↑</span> Save all segments</button>
+                  </div>
+                  <div id="parsed-preview" class="parsed-preview" hidden></div>
+                </details>
+              </article>
+
+              <!-- Card 02: Source -->
+              <article class="card">
+                <div class="card-heading">
+                  <div class="step-icon mint">02</div>
+                  <div class="card-heading-copy">
+                    <div class="card-kicker" data-i18n="c2-kicker">SOURCE MATERIAL</div>
+                    <h3 data-i18n="c2-title">Add the discharge document</h3>
+                    <p data-i18n="c2-desc">Use the written instructions as the source of truth.</p>
+                  </div>
+                  <span class="card-illustration">▤</span>
+                </div>
+                <div class="upload-zone">
+                  <div class="upload-icon">↑</div>
+                  <div class="upload-copy"><strong data-i18n="c2-upload-title">Choose a discharge PDF</strong><span data-i18n="c2-upload-sub">PDF document · max 10 MB</span></div>
+                  <input type="file" id="file" accept="application/pdf">
+                  <button id="btn-upload" class="button-secondary" data-i18n="c2-btn">Upload PDF</button>
+                </div>
+                <div id="upload-status" class="muted status-line" role="status" data-i18n="c2-hint">One discharge document per case. Uploading replaces the previous one.</div>
+              </article>
+
+              <!-- Card 03: AI Review -->
+              <article class="card">
+                <div class="card-heading">
+                  <div class="step-icon amber">03</div>
+                  <div class="card-heading-copy">
+                    <div class="card-kicker" data-i18n="c3-kicker">AI-ASSISTED REVIEW</div>
+                    <h3 data-i18n="c3-title">Review the draft together</h3>
+                    <p data-i18n="c3-desc">Claude organises instructions into a reviewable draft. A clinician must approve it.</p>
+                  </div>
+                </div>
+                <div class="ai-note">
+                  <span>✦</span>
+                  <p><strong data-i18n="c3-note-strong">Human review stays in control.</strong> <span data-i18n="c3-note-text">AI-generated instructions are drafts, not medical decisions.</span></p>
+                </div>
+                <button id="btn-draft" class="button-primary"><span>✦</span> <span data-i18n="c3-btn">Generate draft with Claude</span></button>
+                <div id="draft" class="draft-content"><p class="empty-state" data-i18n="c3-empty">Upload a document and save a consultation to prepare a draft.</p></div>
+              </article>
+
+              <!-- Card 04: Approved -->
+              <article class="card approved-card">
+                <div class="card-heading">
+                  <div class="step-icon green">✓</div>
+                  <div class="card-heading-copy">
+                    <div class="card-kicker" data-i18n="c4-kicker">CLINICIAN-VERIFIED</div>
+                    <h3 data-i18n="c4-title">Approved care instructions</h3>
+                    <p data-i18n="c4-desc">Only the current approved version unlocks the at-home experience.</p>
+                  </div>
+                </div>
+                <div id="approved"><p class="empty-state" data-i18n="c4-empty">Nothing approved yet.</p></div>
+              </article>
+
+            </div>
+
+            <aside class="secondary-column">
+              <article class="side-card journey-card">
+                <div class="side-card-title"><span>✳</span><h3><span data-patient="possessive">Patient's</span> journey</h3></div>
+                <div class="journey-person">
+                  <div class="person-avatar" data-patient="initial">P</div>
+                  <div>
+                    <strong data-patient="full">Patient not yet identified</strong>
+                    <small id="journey-case-id">—</small>
+                  </div>
+                </div>
+                <div class="journey-divider"></div>
+                <div id="journey-steps"></div>
+              </article>
+
+              <article class="side-card principles-card">
+                <div class="side-card-title"><span>✧</span><h3 data-i18n="trust-title">Designed for trust</h3></div>
+                <div class="principle"><span class="principle-icon">⌕</span><div><strong data-i18n="trust-p1">Evidence-linked</strong><p data-i18n="trust-p1-sub">Answers point back to source passages.</p></div></div>
+                <div class="principle"><span class="principle-icon">✓</span><div><strong data-i18n="trust-p2">Human-approved</strong><p data-i18n="trust-p2-sub">Care instructions need clinician approval.</p></div></div>
+                <div class="principle"><span class="principle-icon">↗</span><div><strong data-i18n="trust-p3">Honest about gaps</strong><p data-i18n="trust-p3-sub">Unanswered questions stay unresolved.</p></div></div>
+              </article>
+
+              <div class="quote-card">
+                <span class="quote-mark">"</span>
+                <p data-i18n="quote-text">Understanding care shouldn't end when the appointment does.</p>
+                <span data-i18n="quote-attr">THE PLAINSPEAK PRINCIPLE</span>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <!-- ===== CAREGIVER TAB ===== -->
+        <section id="tab-caregiver" class="panel">
+          <div class="section-heading">
+            <div>
+              <div class="eyebrow" data-i18n="cg-kicker">AT-HOME SUPPORT</div>
+              <h2 data-i18n="cg-h2">Clarity when it matters</h2>
+              <p data-i18n="cg-desc">Help the patient and their caregiver understand the approved plan, one question at a time.</p>
+            </div>
+          </div>
+          <div id="cg-locked" class="card locked-card">
+            <div class="locked-icon">⌑</div>
+            <h3 data-i18n="cg-locked-title">Waiting for clinician approval</h3>
+            <p data-i18n="cg-locked-desc">Once the care team approves the instructions, the voice assistant and task checklist will become available here.</p>
+            <span class="locked-tag" data-i18n="cg-locked-tag">CARE PLAN NOT YET APPROVED</span>
+          </div>
+          <div id="cg-body" hidden>
+            <div id="cg-care-summary" class="cg-care-summary"></div>
+            <div id="cg-today" class="cg-today" hidden></div>
+            <div class="caregiver-grid">
+              <div class="primary-column">
+                <article class="card">
+                  <!-- HOLOGRAPHIC AI FACE AVATAR -->
+                  <div class="holo-container" id="holo-container" data-state="idle">
+                    <div class="holo-particles" aria-hidden="true">
+                      <span class="hp hp1"></span><span class="hp hp2"></span>
+                      <span class="hp hp3"></span><span class="hp hp4"></span>
+                      <span class="hp hp5"></span><span class="hp hp6"></span>
+                      <span class="hp hp7"></span><span class="hp hp8"></span>
+                    </div>
+                    <div class="holo-hud-bar" aria-hidden="true">
+                      <span class="hud-chip">PLAINSPEAK AI</span>
+                      <span class="hud-pulse">◉</span>
+                      <span class="hud-chip hud-chip-right">ONLINE</span>
+                    </div>
+                    <div class="holo-face-wrap">
+                      <div class="holo-atm holo-atm-r1" aria-hidden="true"></div>
+                      <div class="holo-atm holo-atm-r2" aria-hidden="true"></div>
+                      <div class="holo-atm holo-atm-r3" aria-hidden="true"></div>
+                      <div class="holo-face-glow" aria-hidden="true"></div>
+                      <div class="holo-face">
+                        <div class="holo-eyes">
+                          <div class="holo-eye holo-eye-l">
+                            <div class="eye-brow" aria-hidden="true"></div>
+                            <div class="eye-socket">
+                              <div class="eye-iris">
+                                <div class="eye-pupil"><div class="eye-shine"></div></div>
+                              </div>
+                              <div class="eye-gleam" aria-hidden="true"></div>
+                            </div>
+                          </div>
+                          <div class="holo-eye holo-eye-r">
+                            <div class="eye-brow" aria-hidden="true"></div>
+                            <div class="eye-socket">
+                              <div class="eye-iris">
+                                <div class="eye-pupil"><div class="eye-shine"></div></div>
+                              </div>
+                              <div class="eye-gleam" aria-hidden="true"></div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="holo-nose" aria-hidden="true"></div>
+                        <div class="holo-mouth" role="presentation">
+                          <div class="mouth-lips" aria-hidden="true"></div>
+                          <div class="mouth-cavity" aria-hidden="true"></div>
+                        </div>
+                        <div class="holo-scan" aria-hidden="true"></div>
+                      </div>
+                    </div>
+                    <div class="holo-bars" aria-hidden="true">
+                      <span></span><span></span><span></span><span></span><span></span>
+                      <span></span><span></span><span></span><span></span><span></span>
+                      <span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                    <div class="holo-status-row">
+                      <span class="holo-dot" aria-hidden="true"></span>
+                      <span class="holo-status-text" id="holo-status-text">Ready to help</span>
+                    </div>
+                  </div>
+                  <div class="card-heading">
+                    <div class="step-icon violet">✦</div>
+                    <div class="card-heading-copy">
+                      <div class="card-kicker">VOICE ASSISTANT</div>
+                      <h3>What would you like to know?</h3>
+                      <p>Ask about the approved instructions or report progress.</p>
+                    </div>
+                  </div>
+                  <div class="voice-prompt">
+                    <span class="voice-wave">〰</span>
+                    <div><strong>Ask in your own words</strong><small>Speak naturally or type below.</small></div>
+                    <button id="btn-mic" class="button-primary"><span>🎙</span> Start speaking</button>
+                  </div>
+                  <span id="mic-status" class="muted"></span>
+                  <div id="interim" class="interim"></div>
+                  <div id="cg-suggested" class="cg-suggested-wrap"></div>
+                  <div id="cg-quick-actions" class="cg-quick-actions" hidden></div>
+                  <form id="chat-form" class="chat-input-row">
+                    <input id="chat-input" type="text" placeholder="e.g. What should we remember for tomorrow?" autocomplete="off">
+                    <button type="submit" class="button-primary">Send <span>↗</span></button>
+                  </form>
+                </article>
+                <article class="card">
+                  <div class="card-heading">
+                    <div class="step-icon mint">↔</div>
+                    <div class="card-heading-copy">
+                      <div class="card-kicker">CONVERSATION</div>
+                      <h3>Questions and answers</h3>
+                      <p>Answers grounded in the approved care plan.</p>
+                    </div>
+                    <input type="search" id="convo-search" class="convo-search" placeholder="Search…" aria-label="Search conversation">
+                  </div>
+                  <div class="conversation-wrap">
+                    <div id="conversation" class="conversation-list"><p class="empty-state">Your conversation will appear here.</p></div>
+                    <button type="button" id="scroll-to-bottom" class="scroll-fab" hidden aria-label="Scroll to latest answer">↓ Latest</button>
+                  </div>
+                </article>
+              </div>
+              <aside class="secondary-column">
+                <article class="side-card progress-stats-card" id="cg-progress-card" hidden>
+                  <div class="side-card-title"><span>◎</span><h3>Progress</h3></div>
+                  <div class="progress-ring-wrap">
+                    <svg class="progress-ring" viewBox="0 0 80 80" aria-hidden="true">
+                      <defs>
+                        <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%"   stop-color="#8B7EF5"/>
+                          <stop offset="100%" stop-color="#0DD6A8"/>
+                        </linearGradient>
+                      </defs>
+                      <circle class="ring-track" cx="40" cy="40" r="30"/>
+                      <circle class="ring-fill" id="pr-ring" cx="40" cy="40" r="30"/>
+                    </svg>
+                    <div class="ring-center">
+                      <span id="pr-pct" class="ring-pct">0%</span>
+                      <span class="ring-label">done</span>
+                    </div>
+                  </div>
+                  <div class="progress-metrics">
+                    <div class="pmetric"><span class="pmetric-n" id="pr-tasks">0</span><small>tasks complete</small></div>
+                    <div class="pmetric"><span class="pmetric-n" id="pr-questions">0</span><small>questions asked</small></div>
+                    <div class="pmetric"><span class="pmetric-n" id="pr-days">—</span><small>days in care</small></div>
+                  </div>
+                </article>
+                <article class="side-card checklist-card">
+                  <div class="side-card-title"><span>☑</span><h3>Care checklist</h3></div>
+                  <p class="muted">Tasks and progress reported by the caregiver.</p>
+                  <div id="checklist"></div>
+                </article>
+              </aside>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== REPORT TAB ===== -->
+        <section id="tab-report" class="panel">
+          <div class="section-heading">
+            <div>
+              <div class="eyebrow">ONE SHARED VIEW</div>
+              <h2>Care overview</h2>
+              <p>Approved instructions, follow-up actions, and questions still needing human attention.</p>
+            </div>
+            <span class="report-tag">CASE SUMMARY</span>
+          </div>
+          <div id="report" class="card report-card">
+            <div class="empty-report">
+              <span>▤</span>
+              <h3>Your care overview will appear here</h3>
+              <p>Approve the care instructions to generate a central report.</p>
+            </div>
+          </div>
+        </section>
+
+        <footer class="app-footer">
+          <span>✳ PlainSpeak</span>
+          <span>AI-powered care intelligence <span class="footer-dot">·</span> Bridging expertise and understanding</span>
+        </footer>
+      </main>
+    </div>
+
+    <!-- ===== INTELLIGENCE RAIL ===== -->
+    <aside class="intel-rail" id="intel-rail" aria-label="Intelligence panel">
+      <div class="ir-header">
+        <span class="ir-title">Intelligence</span>
+        <button type="button" class="ir-close-btn" id="btn-ir-close" aria-label="Collapse panel">‹</button>
+      </div>
+      <div class="ir-body">
+        <div class="ir-section">
+          <div class="ir-label">WORKFLOW STATE</div>
+          <span class="ir-state-pill" id="ir-state-pill">—</span>
+        </div>
+        <div class="ir-section" id="ir-stats-wrap" hidden>
+          <div class="ir-label">PROGRESS</div>
+          <div class="ir-stats-grid">
+            <div class="ir-stat"><span class="ir-stat-n" id="ir-s-tasks">0/0</span><span class="ir-stat-l">tasks</span></div>
+            <div class="ir-stat"><span class="ir-stat-n" id="ir-s-questions">0</span><span class="ir-stat-l">questions</span></div>
+            <div class="ir-stat"><span class="ir-stat-n" id="ir-s-days">—</span><span class="ir-stat-l">days in care</span></div>
+          </div>
+        </div>
+        <div class="ir-section">
+          <div class="ir-label">SOURCES</div>
+          <div class="ir-sources" id="ir-sources">
+            <p class="ir-empty">No sources uploaded yet.</p>
+          </div>
+        </div>
+        <div class="ir-section">
+          <div class="ir-label">ACTIVITY</div>
+          <div class="ir-feed" id="ir-feed">
+            <p class="ir-empty">No activity yet.</p>
+          </div>
+        </div>
+        <div class="ir-section" id="ir-tasks-wrap" hidden>
+          <div class="ir-label">CARE TASKS</div>
+          <div class="ir-tasks" id="ir-tasks-list"></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ===== COMMAND PALETTE ===== -->
+  <div class="cmd-overlay" id="cmd-overlay" hidden role="dialog" aria-modal="true" aria-label="Command palette">
+    <div class="cmd-palette">
+      <div class="cmd-search-row">
+        <span class="cmd-si">⌕</span>
+        <input type="text" id="cmd-input" class="cmd-input" placeholder="Search patients, run actions, go to…" autocomplete="off" spellcheck="false">
+        <kbd class="cmd-esc-key">ESC</kbd>
+      </div>
+      <div class="cmd-results" id="cmd-results" role="listbox">
+        <!-- populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- History modal -->
+  <div id="history-modal" class="history-modal" role="dialog" aria-modal="true" aria-label="Session record">
+    <div class="history-modal-inner">
+      <div class="history-modal-topbar">
+        <span>Session record</span>
+        <button type="button" id="hist-modal-close" class="hist-close-btn" aria-label="Close">✕</button>
+      </div>
+      <div id="history-modal-content" class="hist-modal-content"></div>
+    </div>
+  </div>
+
+  <!-- New patient modal -->
+  <div id="new-patient-modal" class="history-modal" role="dialog" aria-modal="true" aria-label="New patient case">
+    <div class="history-modal-inner" style="max-width:460px">
+      <div class="history-modal-topbar">
+        <span>New patient case</span>
+        <button type="button" id="new-patient-close" class="hist-close-btn" aria-label="Close">✕</button>
+      </div>
+      <div style="padding:24px 22px 28px">
+        <p class="muted" style="margin-bottom:18px">Enter the patient's name to create a new care case. A unique case ID will be generated automatically.</p>
+        <label class="field-label" for="new-patient-name">PATIENT NAME</label>
+        <input type="text" id="new-patient-name" placeholder="e.g. Anna Mueller" style="width:100%;margin-bottom:16px" autocomplete="off">
+        <label class="field-label" for="new-clinician-name">YOUR NAME (CLINICIAN)</label>
+        <input type="text" id="new-clinician-name" placeholder="e.g. Dr. Sarah Chen" style="width:100%;margin-bottom:24px" autocomplete="off">
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button type="button" class="button-secondary" id="new-patient-cancel">Cancel</button>
+          <button type="button" class="button-primary" id="new-patient-confirm"><span>✦</span> Create case</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clinician name modal -->
+  <div id="clinician-modal" class="history-modal" role="dialog" aria-modal="true" aria-label="Set clinician name">
+    <div class="history-modal-inner" style="max-width:400px">
+      <div class="history-modal-topbar">
+        <span>Clinician identity</span>
+        <button type="button" id="clinician-modal-close" class="hist-close-btn" aria-label="Close">✕</button>
+      </div>
+      <div style="padding:24px 22px 28px">
+        <p class="muted" style="margin-bottom:18px">This name is recorded on every care plan you approve.</p>
+        <label class="field-label" for="clinician-name-input">YOUR NAME</label>
+        <input type="text" id="clinician-name-input" placeholder="e.g. Dr. Sarah Chen" style="width:100%;margin-bottom:20px" autocomplete="off">
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button type="button" class="button-secondary" id="clinician-modal-cancel">Cancel</button>
+          <button type="button" class="button-primary" id="clinician-modal-save">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Keyboard shortcuts overlay (press ?) -->
+  <div class="shortcuts-overlay" id="shortcuts-overlay" hidden role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
+    <div class="shortcuts-panel">
+      <div class="sp-header">
+        <span class="sp-title">Keyboard shortcuts</span>
+        <button type="button" class="sp-close-btn" id="shortcuts-close" aria-label="Close">✕</button>
+      </div>
+      <div class="sp-body">
+        <div class="sp-group">
+          <div class="sp-group-label">Navigation</div>
+          <div class="sp-row"><kbd>Ctrl</kbd><kbd>K</kbd><span>Open command palette</span></div>
+          <div class="sp-row"><kbd>?</kbd><span>Show keyboard shortcuts</span></div>
+          <div class="sp-row"><kbd>ESC</kbd><span>Close any overlay</span></div>
+        </div>
+        <div class="sp-group">
+          <div class="sp-group-label">Workflow</div>
+          <div class="sp-row"><kbd>Ctrl</kbd><kbd>G</kbd><span>Generate AI draft</span></div>
+          <div class="sp-row"><kbd>Ctrl</kbd><kbd>U</kbd><span>Upload discharge PDF</span></div>
+          <div class="sp-row"><kbd>Ctrl</kbd><kbd>Enter</kbd><span>Send chat message</span></div>
+        </div>
+        <div class="sp-group">
+          <div class="sp-group-label">Interface</div>
+          <div class="sp-row"><kbd>Ctrl</kbd><kbd>I</kbd><span>Toggle intelligence rail</span></div>
+          <div class="sp-row"><kbd>1</kbd><span>Care @ Clinic tab</span></div>
+          <div class="sp-row"><kbd>2</kbd><span>Care @ Home tab</span></div>
+          <div class="sp-row"><kbd>3</kbd><span>Care Overview tab</span></div>
+        </div>
+      </div>
+      <div class="sp-footer">Press <kbd>ESC</kbd> or <kbd>?</kbd> to close</div>
+    </div>
+  </div>
+
+  <div id="toast-container" aria-live="assertive" aria-atomic="false"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="/enhancements.js"></script>
+  <script src="/app.js"></script>
+  <script src="/consultation.js"></script>
+  <script>
+    /* ── Mobile sidebar toggle ── */
+    (function () {
+      const btn      = document.getElementById('btn-sidebar-toggle');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      function closeSidebar() {
+        document.body.classList.remove('sidebar-open');
+        btn && (btn.setAttribute('aria-expanded', 'false'));
+      }
+      function openSidebar() {
+        document.body.classList.add('sidebar-open');
+        btn && (btn.setAttribute('aria-expanded', 'true'));
+      }
+      btn?.addEventListener('click', () =>
+        document.body.classList.contains('sidebar-open') ? closeSidebar() : openSidebar());
+      backdrop?.addEventListener('click', closeSidebar);
+      // Close sidebar when a tab is selected on mobile
+      document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+        if (window.innerWidth <= 800) closeSidebar();
+      }));
+    })();
+
+    /* ── Tab switching ── */
+    document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
+      const labels = {doctor:'Care @ Clinic', caregiver:'Care @ Home', report:'Care Overview'};
+      const titles = {
+        doctor:    'Care, made <em>clearer.</em>',
+        caregiver: 'Support that <em>stays with you.</em>',
+        report:    'One view. <em>Every next step.</em>',
+      };
+      document.getElementById('crumb-current').textContent = labels[tab.dataset.tab];
+      document.getElementById('page-title').innerHTML = titles[tab.dataset.tab];
+    }));
+
+    /* ── Neural network — mouse-attracted, click ripple, dual colour ── */
+    (function () {
+      const canvas = document.getElementById('neural-bg');
+      const ctx    = canvas.getContext('2d');
+      let W, H;
+      const mouse   = { x: -9999, y: -9999 };
+      const ripples = [];
+      const NUM = 90, DIST = 155;
+      const dots = [];
+
+      function resize() {
+        W = canvas.width  = window.innerWidth;
+        H = canvas.height = window.innerHeight;
+      }
+      resize();
+      window.addEventListener('resize', resize);
+      document.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+      document.addEventListener('click',     e => ripples.push({ x: e.clientX, y: e.clientY, r: 0, a: 0.55 }));
+
+      for (let i = 0; i < NUM; i++) {
+        dots.push({
+          x: Math.random() * (W || 1400), y: Math.random() * (H || 900),
+          vx: (Math.random() - 0.5) * 0.3,
+          vy: (Math.random() - 0.5) * 0.3,
+          r:  Math.random() * 1.5 + 0.5,
+          mint: Math.random() > 0.68,
+        });
+      }
+
+      function frame() {
+        ctx.clearRect(0, 0, W, H);
+        for (let i = ripples.length - 1; i >= 0; i--) {
+          const rp = ripples[i];
+          rp.r += 5; rp.a -= 0.013;
+          if (rp.a <= 0) { ripples.splice(i, 1); continue; }
+          ctx.beginPath(); ctx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(139,126,245,${rp.a})`; ctx.lineWidth = 1.5; ctx.stroke();
+          ctx.beginPath(); ctx.arc(rp.x, rp.y, rp.r * 0.55, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(13,214,168,${rp.a * 0.5})`; ctx.lineWidth = 1; ctx.stroke();
+        }
+        dots.forEach(d => {
+          const mdx = mouse.x - d.x, mdy = mouse.y - d.y;
+          const md2 = mdx * mdx + mdy * mdy;
+          if (md2 < 40000 && md2 > 0) {
+            const md = Math.sqrt(md2), f = (200 - md) / 200 * 0.018;
+            d.vx += (mdx / md) * f; d.vy += (mdy / md) * f;
+          }
+          const spd = Math.hypot(d.vx, d.vy);
+          if (spd > 1.5) { d.vx *= 1.5 / spd; d.vy *= 1.5 / spd; }
+          d.x += d.vx; d.y += d.vy;
+          if (d.x < 0 || d.x > W) d.vx *= -1;
+          if (d.y < 0 || d.y > H) d.vy *= -1;
+        });
+        for (let i = 0; i < dots.length; i++) {
+          for (let j = i + 1; j < dots.length; j++) {
+            const dx = dots[i].x - dots[j].x, dy = dots[i].y - dots[j].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < DIST) {
+              const a = (1 - dist / DIST) * 0.2;
+              ctx.beginPath();
+              ctx.strokeStyle = (dots[i].mint && dots[j].mint) ? `rgba(13,214,168,${a})` : `rgba(139,126,245,${a})`;
+              ctx.lineWidth = 0.7;
+              ctx.moveTo(dots[i].x, dots[i].y); ctx.lineTo(dots[j].x, dots[j].y); ctx.stroke();
+            }
+          }
+        }
+        const MGLOW = 180;
+        dots.forEach(d => {
+          const mdx = mouse.x - d.x, mdy = mouse.y - d.y;
+          const md  = Math.sqrt(mdx * mdx + mdy * mdy);
+          const boost = md < MGLOW ? (1 - md / MGLOW) * 3.5 : 0;
+          if (boost > 0.3) {
+            ctx.beginPath(); ctx.arc(d.x, d.y, (d.r + boost) * 3, 0, Math.PI * 2);
+            ctx.fillStyle = d.mint ? 'rgba(13,214,168,.05)' : 'rgba(139,126,245,.05)'; ctx.fill();
+          }
+          ctx.beginPath(); ctx.arc(d.x, d.y, d.r + boost * 0.4, 0, Math.PI * 2);
+          ctx.fillStyle = d.mint ? `rgba(13,214,168,${0.38 + boost * 0.35})` : `rgba(139,126,245,${0.38 + boost * 0.35})`;
+          ctx.fill();
+        });
+        requestAnimationFrame(frame);
+      }
+      frame();
+    })();
+
+    /* ── Cursor spotlight ── */
+    (function () {
+      const spot = document.querySelector('.cursor-spotlight');
+      document.addEventListener('mousemove', e => {
+        spot.style.background =
+          `radial-gradient(circle 700px at ${e.clientX}px ${e.clientY}px,` +
+          `rgba(139,126,245,.06) 0%, rgba(13,214,168,.025) 45%, transparent 70%)`;
+      });
+    })();
+
+    /* ── 3-D card tilt ── */
+    (function () {
+      function attachTilt(el) {
+        if (el.dataset.tilt) return;
+        el.dataset.tilt = '1';
+        el.style.transition = 'transform .15s ease, box-shadow .15s ease';
+        el.addEventListener('mousemove', e => {
+          const r = el.getBoundingClientRect();
+          const x = (e.clientX - r.left) / r.width  - 0.5;
+          const y = (e.clientY - r.top)  / r.height - 0.5;
+          el.style.transform  = `perspective(900px) rotateX(${-y * 7}deg) rotateY(${x * 7}deg) translateZ(10px)`;
+          el.style.boxShadow  =
+            `0 24px 64px rgba(0,0,0,.6),${-x * 28}px ${-y * 28}px 40px rgba(139,126,245,.14),inset 0 1px 0 rgba(255,255,255,.05)`;
+        });
+        el.addEventListener('mouseleave', () => { el.style.transform = ''; el.style.boxShadow = ''; });
+      }
+      document.querySelectorAll('.card, .side-card').forEach(attachTilt);
+      new MutationObserver(() => document.querySelectorAll('.card, .side-card').forEach(attachTilt))
+        .observe(document.body, { childList: true, subtree: true });
+    })();
+
+    /* ── Magnetic primary buttons ── */
+    (function () {
+      function bindMag(btn) {
+        if (btn.dataset.mag) return;
+        btn.dataset.mag = '1';
+        btn.addEventListener('mousemove', e => {
+          const r = btn.getBoundingClientRect();
+          const x = (e.clientX - (r.left + r.width  / 2)) * 0.24;
+          const y = (e.clientY - (r.top  + r.height / 2)) * 0.24;
+          btn.style.transform = `translate(${x}px,${y}px) scale(1.04)`;
+        });
+        btn.addEventListener('mouseleave', () => { btn.style.transform = ''; });
+      }
+      document.querySelectorAll('.button-primary').forEach(bindMag);
+      new MutationObserver(() => document.querySelectorAll('.button-primary').forEach(bindMag))
+        .observe(document.body, { childList: true, subtree: true });
+    })();
+
+    /* ── Hero stat count-up ── */
+    (function () {
+      const els = document.querySelectorAll('.hstat-n');
+      const io  = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          const el = entry.target, end = parseInt(el.dataset.target, 10);
+          let cur = 0; const step = Math.ceil(end / 40);
+          const iv = setInterval(() => {
+            cur = Math.min(cur + step, end); el.textContent = cur;
+            if (cur >= end) { clearInterval(iv); el.classList.add('hstat-done'); setTimeout(() => el.classList.remove('hstat-done'), 900); }
+          }, 28);
+          io.unobserve(el);
+        });
+      }, { threshold: 0.5 });
+      els.forEach(el => io.observe(el));
+    })();
+
+    /* ── Animated health vitals ── */
+    (function () {
+      const bpmEl = document.getElementById('vf-bpm'), spo2El = document.getElementById('vf-spo2'), bpEl = document.getElementById('vf-bp');
+      if (!bpmEl) return;
+      function update() { bpmEl.textContent = 66 + Math.floor(Math.random() * 12); spo2El.textContent = 96 + Math.floor(Math.random() * 3); bpEl.textContent = 115 + Math.floor(Math.random() * 10); }
+      setInterval(update, 3200);
+    })();
+
+    /* ── Language switcher ── */
+    (function () {
+      const T = {
+        en: {
+          'eyebrow-hero':' AI-POWERED CARE INTELLIGENCE','page-title':'Care, made <em>clearer.</em>',
+          'page-subtitle':'Bridging clinical expertise and everyday understanding — from the consultation room all the way home.',
+          'tag-clinician':'Clinician-approved','tag-ai':'AI-assisted','tag-evidence':'Evidence-linked',
+          'stat-accuracy':'Accuracy','stat-faster':'Faster','stat-always':'Always On',
+          'nav-clinic':'Care @ Clinic','nav-home':'Care @ Home','nav-overview':'Care Overview',
+          'step-1':'Capture','step-1-sub':'Conversation + document','step-2':'Review','step-2-sub':'Check what matters','step-3':'Approve','step-3-sub':'Clinician in control',
+          'workspace-kicker':'CARE TEAM WORKSPACE','workspace-h2':'Build a shared understanding','workspace-p':'Bring spoken instructions and the written plan together before care continues at home.',
+          'c1-kicker':'LIVE CONSULTATION','c1-title':'Capture the conversation','c1-desc':'Transcribe the clinician–patient discussion with patient consent.',
+          'c1-pill':' VOICE INPUT','c1-consent':'Both participants consent to transcription of this consultation.','c1-lang-label':'LANGUAGE',
+          'c2-kicker':'SOURCE MATERIAL','c2-title':'Add the discharge document','c2-desc':'Use the written instructions as the source of truth.',
+          'c2-upload-title':'Choose a discharge PDF','c2-upload-sub':'PDF document · max 10 MB','c2-btn':'Upload PDF','c2-hint':'One discharge document per case. Uploading replaces the previous one.',
+          'c3-kicker':'AI-ASSISTED REVIEW','c3-title':'Review the draft together','c3-desc':'Claude organises instructions into a reviewable draft. A clinician must approve it.',
+          'c3-note-strong':'Human review stays in control.','c3-note-text':'AI-generated instructions are drafts, not medical decisions.','c3-btn':'Generate draft with Claude','c3-empty':'Upload a document and save a consultation to prepare a draft.',
+          'c4-kicker':'CLINICIAN-VERIFIED','c4-title':'Approved care instructions','c4-desc':'Only the current approved version unlocks the at-home experience.','c4-empty':'Nothing approved yet.',
+          'trust-title':'Designed for trust','trust-p1':'Evidence-linked','trust-p1-sub':'Answers point back to source passages.','trust-p2':'Human-approved','trust-p2-sub':'Care instructions need clinician approval.','trust-p3':'Honest about gaps','trust-p3-sub':'Unanswered questions stay unresolved.',
+          'quote-text':"Understanding care shouldn't end when the appointment does.",'quote-attr':'THE PLAINSPEAK PRINCIPLE',
+          'cg-kicker':'AT-HOME SUPPORT','cg-h2':'Clarity when it matters','cg-desc':'Help the patient and their caregiver understand the approved plan, one question at a time.',
+          'cg-locked-title':'Waiting for clinician approval','cg-locked-desc':'Once the care team approves the instructions, the voice assistant and task checklist will become available here.','cg-locked-tag':'CARE PLAN NOT YET APPROVED',
+        },
+        de: {
+          'eyebrow-hero':' KI-GESTÜTZTE PFLEGEINTELLIGENZ','page-title':'Pflege, <em>klarer.</em>',
+          'page-subtitle':'Klinisches Fachwissen und alltägliches Verständnis verbinden — vom Sprechzimmer bis nach Hause.',
+          'tag-clinician':'Klinisch geprüft','tag-ai':'KI-gestützt','tag-evidence':'Evidenzbasiert',
+          'stat-accuracy':'Genauigkeit','stat-faster':'Schneller','stat-always':'Immer aktiv',
+          'nav-clinic':'Pflege @ Klinik','nav-home':'Pflege @ Zuhause','nav-overview':'Pflegeübersicht',
+          'step-1':'Aufzeichnen','step-1-sub':'Gespräch + Dokument','step-2':'Überprüfen','step-2-sub':'Das Wesentliche prüfen','step-3':'Genehmigen','step-3-sub':'Arzt behält Kontrolle',
+          'workspace-kicker':'PFLEGETEAM-BEREICH','workspace-h2':'Gemeinsames Verständnis aufbauen','workspace-p':'Mündliche Anweisungen und schriftlichen Plan zusammenführen — bevor die Pflege zuhause weitergeht.',
+          'c1-kicker':'LIVE-KONSULTATION','c1-title':'Gespräch aufzeichnen','c1-desc':'Das Arzt-Patienten-Gespräch mit Einwilligung transkribieren.',
+          'c1-pill':' SPRACHEINGABE','c1-consent':'Beide Teilnehmer stimmen der Transkription dieser Konsultation zu.','c1-lang-label':'SPRACHE',
+          'c2-kicker':'QUELLMATERIAL','c2-title':'Entlassungsdokument hinzufügen','c2-desc':'Die schriftlichen Anweisungen als maßgebliche Quelle verwenden.',
+          'c2-upload-title':'Entlassungs-PDF auswählen','c2-upload-sub':'PDF-Dokument · max 10 MB','c2-btn':'PDF hochladen','c2-hint':'Ein Entlassungsdokument pro Fall. Hochladen ersetzt das vorherige.',
+          'c3-kicker':'KI-GESTÜTZTE ÜBERPRÜFUNG','c3-title':'Entwurf gemeinsam überprüfen','c3-desc':'Claude strukturiert Anweisungen in einen überprüfbaren Entwurf. Ein Arzt muss ihn genehmigen.',
+          'c3-note-strong':'Menschliche Kontrolle bleibt erhalten.','c3-note-text':'KI-generierte Anweisungen sind Entwürfe, keine medizinischen Entscheidungen.','c3-btn':'Entwurf mit Claude erstellen','c3-empty':'Dokument hochladen und Konsultation speichern, um einen Entwurf zu erstellen.',
+          'c4-kicker':'ÄRZTLICH GEPRÜFT','c4-title':'Genehmigte Pflegeanweisungen','c4-desc':'Nur die aktuelle genehmigte Version schaltet die Heimansicht frei.','c4-empty':'Noch nichts genehmigt.',
+          'trust-title':'Vertrauen als Grundprinzip','trust-p1':'Evidenzbasiert','trust-p1-sub':'Antworten verweisen auf Quellabschnitte.','trust-p2':'Menschlich geprüft','trust-p2-sub':'Pflegeanweisungen benötigen ärztliche Genehmigung.','trust-p3':'Ehrlich bei Lücken','trust-p3-sub':'Unbeantwortete Fragen bleiben offen.',
+          'quote-text':'Das Verständnis der Pflege sollte nicht enden, wenn der Termin endet.','quote-attr':'DAS PLAINSPEAK-PRINZIP',
+          'cg-kicker':'HÄUSLICHE UNTERSTÜTZUNG','cg-h2':'Klarheit, wenn es darauf ankommt','cg-desc':'Dem Patienten und der Pflegeperson helfen, den genehmigten Plan zu verstehen.',
+          'cg-locked-title':'Warten auf ärztliche Genehmigung','cg-locked-desc':'Sobald das Pflegeteam die Anweisungen genehmigt, werden Sprachassistent und Aufgabenliste hier verfügbar.','cg-locked-tag':'PFLEGEPLAN NOCH NICHT GENEHMIGT',
+        }
+      };
+      function apply(lang) {
+        const t = T[lang]; if (!t) return;
+        document.querySelectorAll('[data-i18n]').forEach(el => { if (t[el.dataset.i18n] !== undefined) el.textContent = t[el.dataset.i18n]; });
+        document.querySelectorAll('[data-i18n-html]').forEach(el => { if (t[el.dataset.i18nHtml] !== undefined) el.innerHTML = t[el.dataset.i18nHtml]; });
+        document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+        document.documentElement.lang = lang;
+        localStorage.setItem('ps-lang', lang);
+      }
+      document.querySelectorAll('.lang-btn').forEach(b => b.addEventListener('click', () => apply(b.dataset.lang)));
+      apply(localStorage.getItem('ps-lang') || 'en');
+    })();
+
+    /* ══════════════════════════════════════════════════════════
+       Case Context Bar
+       ══════════════════════════════════════════════════════════ */
+    (function () {
+      function setCCBState(c) {
+        const pill = document.getElementById('ccb-state-pill');
+        if (!pill) return;
+        const hasConsultation = c.transcriptSegments && c.transcriptSegments.length > 0;
+        const hasDocument     = c.sources && c.sources.some(function(s){ return s.kind === 'document'; });
+        const hasDraft        = c.draftSummary !== null && c.draftSummary !== undefined;
+        const isApproved      = c.workflowState === 'approved' || c.workflowState === 'post_care_active';
+
+        pill.className = 'ccb-state-pill';
+        if (isApproved) {
+          pill.textContent = 'Approved';
+          pill.classList.add('approved');
+        } else if (hasDraft) {
+          pill.textContent = 'Draft ready';
+          pill.classList.add('active');
+        } else if (hasConsultation || hasDocument) {
+          pill.textContent = 'In review';
+          pill.classList.add('active');
+        } else {
+          pill.textContent = 'Ready';
+        }
+      }
+
+      function setCCBPipeline(c) {
+        const fill1 = document.getElementById('ccb-fill-1');
+        const fill2 = document.getElementById('ccb-fill-2');
+        const p1 = document.getElementById('ccb-p1');
+        const p2 = document.getElementById('ccb-p2');
+        const p3 = document.getElementById('ccb-p3');
+        if (!p1) return;
+
+        const hasConsultation = c.transcriptSegments && c.transcriptSegments.length > 0;
+        const hasDocument     = c.sources && c.sources.some(function(s){ return s.kind === 'document'; });
+        const hasDraft        = c.draftSummary !== null && c.draftSummary !== undefined;
+        const hasApproved     = c.approvedSummaryVersion !== null && c.approvedSummaryVersion !== undefined;
+        const isApproved      = c.workflowState === 'approved' || c.workflowState === 'post_care_active';
+
+        p1.className = 'ccb-pipe-step';
+        p2.className = 'ccb-pipe-step';
+        p3.className = 'ccb-pipe-step';
+        fill1 && (fill1.style.width = '0%');
+        fill2 && (fill2.style.width = '0%');
+
+        // Step 1 (Consultation): active if hasConsultation, done if hasDocument
+        if (hasDocument) {
+          p1.classList.add('done');
+        } else if (hasConsultation) {
+          p1.classList.add('active');
+        } else {
+          p1.classList.add('active'); // always show step 1 as active baseline
+        }
+
+        // Step 2 (Review): active if hasDraft && !hasApproved, done if hasApproved
+        if (hasApproved || isApproved) {
+          p2.classList.add('done');
+          fill1 && (fill1.style.width = '100%');
+        } else if (hasDraft) {
+          p2.classList.add('active');
+          fill1 && (fill1.style.width = '100%');
+        } else if (hasDocument || hasConsultation) {
+          fill1 && (fill1.style.width = '50%');
+        }
+
+        // Step 3 (At-home care): active/done if isApproved
+        if (isApproved) {
+          p3.classList.add('done');
+          fill2 && (fill2.style.width = '100%');
+        } else if (hasApproved) {
+          p3.classList.add('active');
+          fill2 && (fill2.style.width = '50%');
+        }
+      }
+
+      function setCCBPatient(caseView) {
+        const c = caseView && caseView.case;
+        if (!c) return;
+        const nameEl   = document.querySelector('[data-patient="full"]');
+        const initEl   = document.querySelector('[data-patient="initial"]');
+        const caseIdEl = document.getElementById('ccb-case-id');
+        const name = c.patientName || c.patient_name || 'Patient';
+        if (nameEl) nameEl.textContent = name;
+        if (initEl) initEl.textContent = name.charAt(0).toUpperCase();
+        if (caseIdEl) caseIdEl.textContent = c.caseId || c.case_id || '';
+      }
+
+      document.addEventListener('ps:case', function (e) {
+        const view = e.detail;
+        if (!view || !view.case) return;
+        setCCBState(view.case);
+        setCCBPipeline(view.case);
+        setCCBPatient(view);
+      });
+    })();
+
+    /* ══════════════════════════════════════════════════════════
+       Intelligence Rail
+       ══════════════════════════════════════════════════════════ */
+    (function () {
+      const shell     = document.querySelector('.app-shell');
+      const rail      = document.getElementById('intel-rail');
+      const toggleBtn = document.getElementById('btn-ir-toggle');
+      const closeBtn  = document.getElementById('btn-ir-close');
+
+      function openRail()  { shell && shell.classList.add('ir-open');    rail && (rail.hidden = false); }
+      function closeRail() { shell && shell.classList.remove('ir-open'); }
+      function toggleRail() { shell && shell.classList.contains('ir-open') ? closeRail() : openRail(); }
+
+      toggleBtn && toggleBtn.addEventListener('click', toggleRail);
+      closeBtn  && closeBtn.addEventListener('click',  closeRail);
+
+      function populateRail(view) {
+        if (!view) return;
+        const c = view.case || {};
+
+        const hasConsultation = c.transcriptSegments && c.transcriptSegments.length > 0;
+        const hasDocument     = c.sources && c.sources.some(function(s){ return s.kind === 'document'; });
+        const hasDraft        = c.draftSummary !== null && c.draftSummary !== undefined;
+        const isApproved      = c.workflowState === 'approved' || c.workflowState === 'post_care_active';
+
+        // Workflow state pill
+        const statePill = document.getElementById('ir-state-pill');
+        if (statePill) {
+          if (isApproved) statePill.textContent = 'approved';
+          else if (hasDraft) statePill.textContent = 'draft_ready';
+          else if (hasConsultation || hasDocument) statePill.textContent = 'in_review';
+          else statePill.textContent = 'ready';
+        }
+
+        // Sources section
+        const sourcesWrap = document.getElementById('ir-sources');
+        if (sourcesWrap) {
+          const items = [];
+          if (hasConsultation) items.push({ name: 'Consultation transcript', type: 'TEXT' });
+          if (hasDocument) {
+            const docSource = c.sources && c.sources.find(function(s){ return s.kind === 'document'; });
+            items.push({ name: (docSource && docSource.filename) || 'Discharge document', type: 'PDF' });
+          }
+          if (items.length === 0) {
+            sourcesWrap.innerHTML = '<p class="ir-empty">No sources uploaded yet.</p>';
+          } else {
+            sourcesWrap.innerHTML = items.map(s =>
+              '<div class="ir-source-item">' +
+                '<span class="ir-source-dot"></span>' +
+                '<span class="ir-source-name">' + s.name + '</span>' +
+                (s.type ? '<span class="ir-source-type">' + s.type + '</span>' : '') +
+              '</div>'
+            ).join('');
+          }
+        }
+
+        // Activity feed
+        const feedWrap = document.getElementById('ir-feed');
+        if (feedWrap && view.events && view.events.length) {
+          feedWrap.innerHTML = view.events.slice(0, 6).map(function (ev) {
+            return '<div class="ir-feed-item">' +
+              '<span class="ir-feed-dot"></span>' +
+              '<span class="ir-feed-text">' + (ev.text || ev.type || '') + '</span>' +
+            '</div>';
+          }).join('');
+        }
+
+        // Stats
+        const statsWrap = document.getElementById('ir-stats-wrap');
+        if (statsWrap && view.stats) {
+          statsWrap.hidden = false;
+          const sq = document.getElementById('ir-s-questions');
+          const st = document.getElementById('ir-s-tasks');
+          if (sq) sq.textContent = view.stats.questions || 0;
+          if (st) st.textContent = view.stats.tasks || '0/0';
+        }
+      }
+
+      document.addEventListener('ps:case', function (e) {
+        populateRail(e.detail);
+      });
+    })();
+
+    /* ══════════════════════════════════════════════════════════
+       Command Palette  (Ctrl+K / Cmd+K)
+       ══════════════════════════════════════════════════════════ */
+    (function () {
+      const overlay    = document.getElementById('cmd-overlay');
+      const input      = document.getElementById('cmd-input');
+      const results    = document.getElementById('cmd-results');
+      const triggerBtn = document.getElementById('btn-cmd-palette');
+      if (!overlay || !input || !results) return;
+
+      let focusIdx = -1;
+      let allItems = [];
+
+      const QUICK_ACTIONS = [
+        { icon: '＋', name: 'New patient case',      sub: 'Start a fresh case',         action: () => document.getElementById('btn-new-case') && document.getElementById('btn-new-case').click() },
+        { icon: '⬆', name: 'Upload discharge PDF',  sub: 'Add a source document',       action: () => document.getElementById('file')      && document.getElementById('file').click()      },
+        { icon: '✦', name: 'Generate draft',         sub: 'Run AI review with Claude',   action: () => document.getElementById('btn-draft') && document.getElementById('btn-draft').click() },
+        { icon: '✓', name: 'Approve instructions',   sub: 'Mark current draft approved', action: () => document.getElementById('btn-approve')  && document.getElementById('btn-approve').click()  },
+        { icon: '◎', name: 'Toggle Intelligence Rail', sub: 'Show/hide the side panel', action: () => document.getElementById('btn-ir-toggle') && document.getElementById('btn-ir-toggle').click() },
+      ];
+
+      function openPalette() {
+        overlay.hidden = false;
+        input.value = '';
+        focusIdx = -1;
+        renderResults('');
+        setTimeout(() => input.focus(), 40);
+      }
+
+      function closePalette() {
+        overlay.hidden = true;
+        input.value = '';
+      }
+
+      function renderResults(query) {
+        results.innerHTML = '';
+        focusIdx = -1;
+        allItems = [];
+        const q = query.trim().toLowerCase();
+
+        // Quick actions (always visible or filtered)
+        const actions = q ? QUICK_ACTIONS.filter(a => a.name.toLowerCase().includes(q) || a.sub.toLowerCase().includes(q)) : QUICK_ACTIONS;
+        if (actions.length) {
+          const grp = document.createElement('div');
+          grp.className = 'cmd-group-label';
+          grp.textContent = q ? 'Actions' : 'Quick actions';
+          results.appendChild(grp);
+          actions.forEach(a => {
+            const item = document.createElement('div');
+            item.className = 'cmd-item';
+            item.setAttribute('role', 'option');
+            item.innerHTML =
+              '<span class="cmd-item-icon">' + a.icon + '</span>' +
+              '<span class="cmd-item-body">' +
+                '<span class="cmd-item-name">' + a.name + '</span>' +
+                '<span class="cmd-item-sub">' + a.sub + '</span>' +
+              '</span>';
+            item.addEventListener('click', () => { closePalette(); a.action(); });
+            results.appendChild(item);
+            allItems.push(item);
+          });
+        }
+
+        // Patient search via sidebar case list items
+        const caseEls = document.querySelectorAll('.case-list-item');
+        const matches = [];
+        caseEls.forEach(el => {
+          const txt = el.textContent.toLowerCase();
+          if (!q || txt.includes(q)) matches.push(el);
+        });
+        if (matches.length) {
+          const grp = document.createElement('div');
+          grp.className = 'cmd-group-label';
+          grp.textContent = 'Cases';
+          results.appendChild(grp);
+          matches.slice(0, 6).forEach(el => {
+            const item = document.createElement('div');
+            item.className = 'cmd-item';
+            item.setAttribute('role', 'option');
+            item.innerHTML =
+              '<span class="cmd-item-icon">🗂</span>' +
+              '<span class="cmd-item-body">' +
+                '<span class="cmd-item-name">' + el.textContent.trim() + '</span>' +
+                '<span class="cmd-item-sub">Open case</span>' +
+              '</span>';
+            item.addEventListener('click', () => { closePalette(); el.click(); });
+            results.appendChild(item);
+            allItems.push(item);
+          });
+        }
+
+        if (allItems.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'cmd-empty';
+          empty.textContent = q ? 'No results for "' + query + '"' : 'Type to search patients or actions…';
+          results.appendChild(empty);
+        }
+      }
+
+      function moveFocus(dir) {
+        if (!allItems.length) return;
+        allItems.forEach(i => i.classList.remove('focused'));
+        focusIdx = (focusIdx + dir + allItems.length) % allItems.length;
+        allItems[focusIdx].classList.add('focused');
+        allItems[focusIdx].scrollIntoView({ block: 'nearest' });
+      }
+
+      function activateFocused() {
+        if (focusIdx >= 0 && allItems[focusIdx]) {
+          allItems[focusIdx].click();
+        }
+      }
+
+      input.addEventListener('input', () => renderResults(input.value));
+
+      input.addEventListener('keydown', e => {
+        if (e.key === 'ArrowDown') { e.preventDefault(); moveFocus(1); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); moveFocus(-1); }
+        else if (e.key === 'Enter')  { e.preventDefault(); activateFocused(); }
+        else if (e.key === 'Escape') closePalette();
+      });
+
+      overlay.addEventListener('click', e => { if (e.target === overlay) closePalette(); });
+      triggerBtn && triggerBtn.addEventListener('click', openPalette);
+
+      document.addEventListener('keydown', e => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+          e.preventDefault();
+          overlay.hidden ? openPalette() : closePalette();
+        }
+        if (!overlay.hidden && e.key === 'Escape') closePalette();
+      });
+    })();
+
+    /* ══════════════════════════════════════════════════════════
+       Top API Progress Bar
+       ══════════════════════════════════════════════════════════ */
+    window.tpbStart = function () {
+      const bar  = document.getElementById('top-progress-bar');
+      const fill = document.getElementById('tpb-fill');
+      if (!bar || !fill) return;
+      bar.hidden = false;
+      fill.classList.add('indeterminate');
+      fill.style.width = '';
+    };
+    window.tpbDone = function (ok) {
+      const bar  = document.getElementById('top-progress-bar');
+      const fill = document.getElementById('tpb-fill');
+      if (!bar || !fill) return;
+      fill.classList.remove('indeterminate');
+      fill.style.width = '100%';
+      fill.style.background = ok === false
+        ? 'linear-gradient(90deg,#F2637A,#F87171)'
+        : 'linear-gradient(90deg,#6382FF,#A78BFA,#0DD6A8)';
+      setTimeout(() => {
+        fill.style.width = '0%';
+        setTimeout(() => { bar.hidden = true; fill.style.background = ''; }, 420);
+      }, 380);
+    };
+
+    /* ══════════════════════════════════════════════════════════
+       Notification Centre
+       ══════════════════════════════════════════════════════════ */
+    (function () {
+      const bell      = document.getElementById('btn-notif');
+      const drawer    = document.getElementById('notif-drawer');
+      const list      = document.getElementById('nd-list');
+      const countEl   = document.getElementById('notif-count');
+      const clearBtn  = document.getElementById('btn-notif-clear');
+      if (!bell || !drawer) return;
+
+      let unread = 0;
+      const notifications = [];
+
+      function updateBadge() {
+        if (unread > 0) {
+          countEl.hidden = false;
+          countEl.textContent = unread > 9 ? '9+' : String(unread);
+          bell.classList.add('has-unread');
+        } else {
+          countEl.hidden = true;
+          bell.classList.remove('has-unread');
+        }
+      }
+
+      function renderList() {
+        if (notifications.length === 0) {
+          list.innerHTML = '<p class="nd-empty">You\'re all caught up.</p>';
+          return;
+        }
+        list.innerHTML = notifications.map((n, i) =>
+          '<div class="nd-item nd-' + n.type + (n.unread ? ' nd-unread' : '') + '" data-idx="' + i + '">' +
+            '<span class="nd-dot"></span>' +
+            '<span class="nd-content">' +
+              '<span class="nd-msg">' + n.msg + '</span>' +
+              '<span class="nd-time">' + n.time + '</span>' +
+            '</span>' +
+          '</div>'
+        ).join('');
+      }
+
+      window.notify = function (msg, type) {
+        type = type || 'info';
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        notifications.unshift({ msg: msg, type: type, time: hh + ':' + mm, unread: true });
+        if (notifications.length > 20) notifications.pop();
+        unread++;
+        updateBadge();
+        bell.style.animation = 'none';
+        bell.offsetWidth;
+        bell.style.animation = '';
+      };
+
+      bell.addEventListener('click', function (e) {
+        e.stopPropagation();
+        const isOpen = !drawer.hidden;
+        drawer.hidden = isOpen;
+        bell.setAttribute('aria-expanded', String(!isOpen));
+        if (!isOpen) {
+          notifications.forEach(n => { n.unread = false; });
+          unread = 0;
+          updateBadge();
+          renderList();
+        }
+      });
+
+      clearBtn && clearBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        notifications.length = 0;
+        unread = 0;
+        updateBadge();
+        renderList();
+      });
+
+      document.addEventListener('click', function (e) {
+        if (!drawer.hidden && !drawer.contains(e.target) && e.target !== bell) {
+          drawer.hidden = true;
+          bell.setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      // Wire into app events — only notify on genuine state transitions
+      const _prevCaseState = new Map();
+      document.addEventListener('ps:case', function (e) {
+        const v = e.detail;
+        if (!v || !v.case) return;
+        const c = v.case;
+        const caseId = c.caseId || '';
+        const name   = c.patientName || c.patient_name || 'Patient';
+
+        const hasDocument = c.sources && c.sources.some(function(s){ return s.kind === 'document'; });
+        const hasDraft    = c.draftSummary !== null && c.draftSummary !== undefined;
+        const isApproved  = c.workflowState === 'approved' || c.workflowState === 'post_care_active';
+
+        const prev = _prevCaseState.get(caseId) || { isApproved: false, hasDraft: false, hasDocument: false };
+
+        if (isApproved && !prev.isApproved) {
+          window.notify('Care plan approved for ' + name + '.', 'success');
+        } else if (hasDraft && !prev.hasDraft) {
+          window.notify('Draft ready for ' + name + ' — review required.', 'info');
+        } else if (hasDocument && !prev.hasDocument) {
+          window.notify('Discharge document uploaded for ' + name + '.', 'info');
+        }
+
+        _prevCaseState.set(caseId, { isApproved: isApproved, hasDraft: hasDraft, hasDocument: hasDocument });
+      });
+    })();
+
+    /* ══════════════════════════════════════════════════════════
+       Keyboard Shortcuts Overlay  (press ?)
+       ══════════════════════════════════════════════════════════ */
+    (function () {
+      const panel   = document.getElementById('shortcuts-overlay');
+      const closeBtn = document.getElementById('shortcuts-close');
+      if (!panel) return;
+
+      function open()  { panel.hidden = false; }
+      function close() { panel.hidden = true;  }
+
+      closeBtn && closeBtn.addEventListener('click', close);
+      panel.addEventListener('click', e => { if (e.target === panel) close(); });
+
+      document.addEventListener('keydown', e => {
+        const tag = document.activeElement && document.activeElement.tagName;
+        const inInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+        if (!inInput && e.key === '?' && !e.ctrlKey && !e.metaKey) {
+          e.preventDefault();
+          panel.hidden ? open() : close();
+        }
+        if (!panel.hidden && e.key === 'Escape') close();
+      });
+    })();
+
+    /* ══════════════════════════════════════════════════════════
+       Scroll-aware topbar + number-key tab shortcuts
+       ══════════════════════════════════════════════════════════ */
+    (function () {
+      // Scroll-aware topbar
+      const topbar  = document.querySelector('.topbar');
+      const mainShell = document.querySelector('.main-shell');
+      if (mainShell && topbar) {
+        mainShell.addEventListener('scroll', () => {
+          topbar.classList.toggle('scrolled', mainShell.scrollTop > 12);
+        });
+      }
+
+      // Number key tab shortcuts
+      const tabMap = { '1': 'doctor', '2': 'caregiver', '3': 'report' };
+      document.addEventListener('keydown', e => {
+        const tag = document.activeElement && document.activeElement.tagName;
+        const inInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+        if (inInput || e.ctrlKey || e.metaKey || e.altKey) return;
+        if (tabMap[e.key]) {
+          const btn = document.querySelector('.tab[data-tab="' + tabMap[e.key] + '"]');
+          btn && btn.click();
+        }
+      });
+
+      // Ctrl+G → Generate draft
+      document.addEventListener('keydown', e => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'g') {
+          const btn = document.getElementById('btn-draft');
+          if (btn && !btn.disabled && !btn.hidden) { e.preventDefault(); btn.click(); }
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+          const inp = document.getElementById('file');
+          if (inp) { e.preventDefault(); inp.click(); }
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+          const btn = document.getElementById('btn-ir-toggle');
+          if (btn) { e.preventDefault(); btn.click(); }
+        }
+      });
+    })();
+
+    /* ══════════════════════════════════════════════════════════
+       Card completion state from ps:case
+       ══════════════════════════════════════════════════════════ */
+    (function () {
+      document.addEventListener('ps:case', function (e) {
+        const v = e.detail;
+        if (!v || !v.case) return;
+        const c = v.case;
+
+        const hasConsultation = c.transcriptSegments && c.transcriptSegments.length > 0;
+        const hasDocument     = c.sources && c.sources.some(function(s){ return s.kind === 'document'; });
+        const hasDraft        = c.draftSummary !== null && c.draftSummary !== undefined;
+        const hasApproved     = c.approvedSummaryVersion !== null && c.approvedSummaryVersion !== undefined;
+        const isApproved      = c.workflowState === 'approved' || c.workflowState === 'post_care_active';
+
+        const cards = {
+          consultation: document.querySelector('#tab-doctor .card:nth-of-type(1)'),
+          document:     document.querySelector('#tab-doctor .card:nth-of-type(2)'),
+          draft:        document.querySelector('#tab-doctor .card:nth-of-type(3)'),
+          approved:     document.querySelector('#tab-doctor .card:nth-of-type(4)'),
+        };
+
+        function setCardState(card, s) {
+          if (!card) return;
+          card.classList.remove('card-complete', 'card-active');
+          if (s === 'done')   card.classList.add('card-complete');
+          if (s === 'active') card.classList.add('card-active');
+        }
+
+        // Consultation card: done if document exists (moved past), active if only consultation
+        setCardState(cards.consultation, hasDocument ? 'done' : hasConsultation ? 'active' : '');
+        // Document card: done if draft exists, active if document uploaded
+        setCardState(cards.document,     hasDraft ? 'done' : hasDocument ? 'active' : '');
+        // Draft card: done if approved, active if draft exists
+        setCardState(cards.draft,        isApproved || hasApproved ? 'done' : hasDraft ? 'active' : '');
+        // Approved card: done if approved
+        setCardState(cards.approved,     isApproved ? 'done' : hasApproved ? 'active' : '');
+      });
+    })();
+
+    /* ══════════════════════════════════════════════════════════
+       Profile avatar — dynamic clinician initials
+       ══════════════════════════════════════════════════════════ */
+    (function () {
+      function updateAvatar(name) {
+        const avatar = document.querySelector('.profile-row .avatar');
+        if (!avatar) return;
+        const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+        let initials = 'PS';
+        if (parts.length === 1) initials = parts[0].substring(0, 2).toUpperCase();
+        else if (parts.length >= 2) {
+          const last = parts[parts.length - 1];
+          initials = (parts[0][0] + last[0]).toUpperCase();
+        }
+        avatar.textContent = initials;
+      }
+
+      // Watch the clinician name display element for changes
+      const displayEl = document.getElementById('clinician-name-display');
+      if (displayEl) {
+        new MutationObserver(() => {
+          const txt = displayEl.textContent || '';
+          if (txt && txt !== 'Set clinician name ›') updateAvatar(txt);
+        }).observe(displayEl, { childList: true, characterData: true, subtree: true });
+
+        // Initialise from current value
+        updateAvatar(localStorage.getItem('ps-clinician-name') || '');
+      }
+    })();
+  </script>
+</body>
+</html>

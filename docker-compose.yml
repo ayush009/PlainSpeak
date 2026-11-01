@@ -1,0 +1,44 @@
+version: "3.9"
+
+# ── Development ──────────────────────────────────────────────────────────────
+# docker compose up
+# ── Production ───────────────────────────────────────────────────────────────
+# docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  plainspeak:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    image: plainspeak:latest
+    container_name: plainspeak
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      # Required — set in .env or via environment
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY}"
+      RESON8_API_KEY: "${RESON8_API_KEY:-}"
+      # Server
+      HOST: "0.0.0.0"
+      PORT: "8080"
+      APP_ENV: "${APP_ENV:-development}"
+      # CORS — comma-separated allowed origins
+      CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost:8080}"
+      # Storage
+      PLAINSPEAK_DATA_DIR: "/data"
+    volumes:
+      # Persist patient cases and uploaded documents across container restarts
+      - plainspeak_data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/health')"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+volumes:
+  plainspeak_data:
+    driver: local

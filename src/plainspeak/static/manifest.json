@@ -1,0 +1,20 @@
+{
+  "name": "PlainSpeak — Care Intelligence",
+  "short_name": "PlainSpeak",
+  "description": "AI-powered care intelligence. Bridging clinical expertise and everyday understanding.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070C18",
+  "theme_color": "#070C18",
+  "orientation": "any",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["medical", "health", "utilities"]
+}
