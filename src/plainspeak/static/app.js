@@ -1128,6 +1128,11 @@ async function fetchBackendInfo() {
       text.textContent = `Claude · ${short}`;
       badge.title = `Anthropic Claude · ${info.model}`;
     }
+    // Hide voice button if server has no voice key configured
+    if (!info.voice_enabled) {
+      const micBtn = document.getElementById('btn-mic');
+      if (micBtn) micBtn.style.display = 'none';
+    }
   } catch (_) {}
 }
 

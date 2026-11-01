@@ -230,7 +230,7 @@ class GroqClient(OpenAICompatClient):
 
     def __init__(self, settings: Settings) -> None:
         super().__init__(
-            "https://api.groq.com/openai/v1",
+            "https://api.groq.com/openai",
             settings.groq_model,
             settings.groq_api_key,
         )
@@ -241,7 +241,7 @@ class OpenRouterClient(OpenAICompatClient):
 
     def __init__(self, settings: Settings) -> None:
         super().__init__(
-            "https://openrouter.ai/api/v1",
+            "https://openrouter.ai/api",
             settings.openrouter_model,
             settings.openrouter_api_key,
         )

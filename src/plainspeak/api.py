@@ -102,7 +102,7 @@ def health() -> dict[str, str]:
 
 
 @router.get("/info")
-def runtime_info(request: Request) -> dict[str, str]:
+def runtime_info(request: Request, settings: Annotated[Settings, Depends(get_settings)]) -> dict[str, object]:
     """Returns active AI backend and model — consumed by the topbar badge."""
     from plainspeak.ai.client import GroqClient, OllamaClient, OpenRouterClient
     llm = request.app.state.llm
@@ -115,7 +115,12 @@ def runtime_info(request: Request) -> dict[str, str]:
     else:
         backend = "claude"
     model = getattr(llm, "_model", "unknown")
-    return {"backend": backend, "model": model, "version": "1.0.0"}
+    return {
+        "backend": backend,
+        "model": model,
+        "version": "1.0.0",
+        "voice_enabled": bool(settings.reson8_api_key),
+    }
 
 
 # ── Cases ──────────────────────────────────────────────────────────────────────
