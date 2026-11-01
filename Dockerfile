@@ -14,7 +14,7 @@ RUN uv sync --frozen --no-dev --no-install-project
 
 # Copy source and install the project package
 COPY src/ ./src/
-RUN uv sync --frozen --no-dev
+RUN uv sync --frozen --no-dev --no-editable
 
 # ── Stage 2: runtime image ────────────────────────────────────────────────────
 FROM python:3.12-slim AS runtime
