@@ -1128,10 +1128,15 @@ async function fetchBackendInfo() {
       text.textContent = `Claude · ${short}`;
       badge.title = `Anthropic Claude · ${info.model}`;
     }
-    // Hide voice button if server has no voice key configured
+    // Disable voice button if server has no voice key configured
     if (!info.voice_enabled) {
       const micBtn = document.getElementById('btn-mic');
-      if (micBtn) micBtn.style.display = 'none';
+      if (micBtn) {
+        micBtn.disabled = true;
+        micBtn.title = 'Voice not available — RESON8_API_KEY not configured';
+        micBtn.style.opacity = '0.45';
+        micBtn.style.cursor = 'not-allowed';
+      }
     }
   } catch (_) {}
 }
@@ -1181,7 +1186,17 @@ renderHistoryPanel();
         await loadCase(false, 'default');
       }
     } else {
-      await loadCase(false, 'default');
+      // First visit — seed the demo so the app starts with a working example
+      try {
+        const view = await api('/api/demo/seed', { method: 'POST' });
+        CASE_ID = view.case.caseId;
+        localStorage.setItem('ps-active-case', CASE_ID);
+        setCase(view);
+        updateCaseUI();
+        await renderCaseList();
+      } catch (_) {
+        await loadCase(false, 'default');
+      }
     }
   } catch (err) {
     showError(err.message);
