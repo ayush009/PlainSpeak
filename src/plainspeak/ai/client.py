@@ -128,18 +128,20 @@ class _OllamaResponse:
 
 # ── Ollama client ──────────────────────────────────────────────────────────────
 
-class OllamaClient:
-    """LLM backend that calls a local Ollama instance via its OpenAI-compatible endpoint.
+class OpenAICompatClient:
+    """Generic LLM backend for any OpenAI-compatible endpoint (Ollama, Groq, Together AI…).
 
-    Only the text-output path is used — the agent tool-use loop is skipped because
-    Ollama's tool-call reliability varies widely by model. JSON output is requested
-    via response_format and reinforced in the system prompt.
+    Tool-calling is not used — JSON output is requested via response_format and reinforced
+    in the system prompt, which works reliably across all compatible providers.
     """
 
-    def __init__(self, settings: Settings) -> None:
-        self._base_url = settings.ollama_base_url.rstrip("/")
-        self._model = settings.ollama_model
-        self._client = httpx.Client(timeout=180.0)
+    def __init__(self, base_url: str, model: str, api_key: str = "") -> None:
+        self._base_url = base_url.rstrip("/")
+        self._model = model
+        headers: dict[str, str] = {}
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+        self._client = httpx.Client(timeout=180.0, headers=headers)
 
     def create(
         self,
@@ -149,7 +151,7 @@ class OllamaClient:
         output_schema: dict[str, Any],
         tools: list[dict[str, Any]] | None = None,
     ) -> _OllamaResponse:
-        # Tool-calling is not used with Ollama; the JSON schema in the system prompt is enough.
+        # Tool-calling is not used; the JSON schema in the system prompt is enough.
         if tools:
             log.debug("Ollama: %d tool definition(s) ignored (not supported)", len(tools))
         # Flatten Anthropic-format content blocks to plain text for Ollama
@@ -203,14 +205,32 @@ class OllamaClient:
             resp.raise_for_status()
         except httpx.ConnectError as e:
             raise AIError(
-                f"Cannot reach Ollama at {self._base_url}. "
-                "Make sure Ollama is running: `ollama serve`"
+                f"Cannot reach AI backend at {self._base_url}. "
+                "Check your connection or restart Ollama with `ollama serve`."
             ) from e
         except httpx.HTTPStatusError as e:
-            raise AIError(f"Ollama returned HTTP {e.response.status_code}.") from e
+            raise AIError(f"AI backend returned HTTP {e.response.status_code}.") from e
 
         data = resp.json()
         text = data["choices"][0]["message"]["content"]
         finish = data["choices"][0].get("finish_reason", "stop")
-        log.info("Ollama response model=%s finish_reason=%s", self._model, finish)
+        log.info("OpenAI-compat response model=%s finish_reason=%s", self._model, finish)
         return _OllamaResponse(text)
+
+
+class OllamaClient(OpenAICompatClient):
+    """Local Ollama instance."""
+
+    def __init__(self, settings: Settings) -> None:
+        super().__init__(settings.ollama_base_url, settings.ollama_model)
+
+
+class GroqClient(OpenAICompatClient):
+    """Groq cloud inference — fast, free tier, OpenAI-compatible."""
+
+    def __init__(self, settings: Settings) -> None:
+        super().__init__(
+            "https://api.groq.com/openai/v1",
+            settings.groq_model,
+            settings.groq_api_key,
+        )

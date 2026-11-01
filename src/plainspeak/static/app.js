@@ -1108,7 +1108,12 @@ async function fetchBackendInfo() {
     const draftBtn = document.getElementById('btn-draft');
     if (!badge || !text || !info.backend) return;
     badge.dataset.backend = info.backend;
-    if (info.backend === 'ollama') {
+    if (info.backend === 'groq') {
+      const short = (info.model || 'groq').replace('-versatile', '').replace('-instant', '');
+      text.textContent = `Groq · ${short}`;
+      badge.title = `Groq Cloud · ${info.model} · free tier`;
+      if (draftBtn) draftBtn.innerHTML = '<span>✦</span> Generate draft with AI';
+    } else if (info.backend === 'ollama') {
       const short = (info.model || 'ollama').replace(/:latest$/, '');
       text.textContent = `Ollama · ${short}`;
       badge.title = `Local AI · Ollama · ${info.model}`;

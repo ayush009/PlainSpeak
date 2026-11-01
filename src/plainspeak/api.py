@@ -104,9 +104,14 @@ def health() -> dict[str, str]:
 @router.get("/info")
 def runtime_info(request: Request) -> dict[str, str]:
     """Returns active AI backend and model — consumed by the topbar badge."""
-    from plainspeak.ai.client import OllamaClient  # local import avoids circular import risk
+    from plainspeak.ai.client import GroqClient, OllamaClient
     llm = request.app.state.llm
-    backend = "ollama" if isinstance(llm, OllamaClient) else "claude"
+    if isinstance(llm, GroqClient):
+        backend = "groq"
+    elif isinstance(llm, OllamaClient):
+        backend = "ollama"
+    else:
+        backend = "claude"
     model = getattr(llm, "_model", "unknown")
     return {"backend": backend, "model": model, "version": "1.0.0"}
 

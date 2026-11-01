@@ -6499,6 +6499,19 @@ input[type="checkbox"]:checked + .custom-check::after {
   0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--mint); }
   50%       { opacity: .6; box-shadow: 0 0 12px var(--mint); }
 }
+/* Groq variant — violet colour */
+.ai-badge[data-backend="groq"] {
+  background: rgba(139,126,245,.1);
+  border-color: rgba(139,126,245,.22);
+  color: var(--violet);
+}
+.ai-badge[data-backend="groq"]:hover { background: rgba(139,126,245,.16); border-color: rgba(139,126,245,.35); }
+.ai-badge[data-backend="groq"] .ai-badge-dot {
+  background: var(--violet);
+  box-shadow: 0 0 6px var(--violet);
+  animation-name: pulse-dot;
+}
+
 /* Ollama variant — amber colour */
 .ai-badge[data-backend="ollama"] {
   background: rgba(240,169,75,.1);

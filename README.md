@@ -1,5 +1,7 @@
 # PlainSpeak — AI-Powered Care Intelligence
 
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template?template=https://github.com/ayush009/PlainSpeak)
+
 > **Bridging clinical expertise and everyday understanding — from the consultation room all the way home.**
 
 PlainSpeak is a full-stack clinical AI platform that transforms discharge instructions into grounded, voice-accessible care guidance. It captures the consultation, combines it with the discharge document, and generates a clinician-approved care plan that patients and caregivers can ask questions about at home — in plain language, 24/7.
@@ -86,6 +88,32 @@ Unlocks only after a clinician approves the care plan:
 ---
 
 ## AI Backends
+
+### Groq — Free Cloud Inference (recommended for deployment)
+
+The fastest way to get a live public URL working with real AI — Groq is free, requires no credit card, and is faster than most cloud models.
+
+```env
+GROQ_API_KEY=gsk_your-key-here
+GROQ_MODEL=llama-3.1-70b-versatile
+```
+
+**Setup (2 minutes):**
+1. Sign up free at [console.groq.com](https://console.groq.com)
+2. Create an API key
+3. Set `GROQ_API_KEY` in your Railway environment variables
+
+**Free Groq models:**
+
+| Model | Notes |
+|---|---|
+| `llama-3.1-70b-versatile` | Best quality (default) |
+| `llama-3.1-8b-instant` | Fastest response time |
+| `mixtral-8x7b-32768` | Largest context window |
+
+The topbar badge shows **Groq · llama-3.1-70b** in violet when active.
+
+---
 
 ### Ollama — Local, Free, No API Key (recommended for development)
 
