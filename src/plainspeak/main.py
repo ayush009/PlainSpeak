@@ -127,3 +127,7 @@ def run() -> None:
         access_log=False,  # handled by our middleware
         log_level="warning",
     )
+
+
+if __name__ == "__main__":
+    run()
