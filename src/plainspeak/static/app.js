@@ -1108,7 +1108,12 @@ async function fetchBackendInfo() {
     const draftBtn = document.getElementById('btn-draft');
     if (!badge || !text || !info.backend) return;
     badge.dataset.backend = info.backend;
-    if (info.backend === 'groq') {
+    if (info.backend === 'openrouter') {
+      const short = (info.model || 'openrouter').split('/').pop()?.replace(/:free$/, '') || 'openrouter';
+      text.textContent = `OpenRouter · ${short}`;
+      badge.title = `OpenRouter · ${info.model} · free`;
+      if (draftBtn) draftBtn.innerHTML = '<span>✦</span> Generate draft with AI';
+    } else if (info.backend === 'groq') {
       const short = (info.model || 'groq').replace('-versatile', '').replace('-instant', '');
       text.textContent = `Groq · ${short}`;
       badge.title = `Groq Cloud · ${info.model} · free tier`;

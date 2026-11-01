@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from plainspeak.ai.client import LLM, ClaudeClient, GroqClient, OllamaClient
+from plainspeak.ai.client import LLM, ClaudeClient, GroqClient, OllamaClient, OpenRouterClient
 from plainspeak.api import router
 from plainspeak.config import Settings, get_settings
 from plainspeak.storage import CaseStore
@@ -39,6 +39,9 @@ def create_app(settings: Settings | None = None, llm: LLM | None = None) -> Fast
     app.state.store = CaseStore(settings.cases_dir, settings.uploads_dir)
     if llm is not None:
         app.state.llm = llm
+    elif settings.openrouter_api_key:
+        log.info("Using OpenRouter backend: model=%s", settings.openrouter_model)
+        app.state.llm = OpenRouterClient(settings)
     elif settings.groq_api_key:
         log.info("Using Groq backend: model=%s", settings.groq_model)
         app.state.llm = GroqClient(settings)

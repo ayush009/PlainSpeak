@@ -234,3 +234,14 @@ class GroqClient(OpenAICompatClient):
             settings.groq_model,
             settings.groq_api_key,
         )
+
+
+class OpenRouterClient(OpenAICompatClient):
+    """OpenRouter — free cloud inference across 100+ models."""
+
+    def __init__(self, settings: Settings) -> None:
+        super().__init__(
+            "https://openrouter.ai/api/v1",
+            settings.openrouter_model,
+            settings.openrouter_api_key,
+        )

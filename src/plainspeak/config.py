@@ -20,9 +20,13 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "llama3.1"
 
-    # Groq (free cloud inference — https://console.groq.com — takes priority over Ollama)
+    # Groq (free cloud inference — https://console.groq.com)
     groq_api_key: str = ""
     groq_model: str = "llama-3.1-70b-versatile"
+
+    # OpenRouter (free cloud inference — https://openrouter.ai — takes priority when set)
+    openrouter_api_key: str = ""
+    openrouter_model: str = "meta-llama/llama-3.1-70b-instruct:free"
 
     # Voice
     reson8_api_key: str = ""
