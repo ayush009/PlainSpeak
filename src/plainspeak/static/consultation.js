@@ -206,7 +206,9 @@ async function startConsultation() {
     renderConsultationControls();
   } catch (err) {
     closeConsultationCapture();
-    $("#consult-status").textContent = "Live capture unavailable. Manual fallback is below.";
+    $("#consult-status").textContent = "Live capture unavailable. Use manual entry below.";
+    // Swallow config errors (no Reson8 key) — they're expected, not user-facing bugs
+    if (err.message?.toLowerCase().includes('configured') || err.message?.toLowerCase().includes('reson8')) return;
     throw err;
   }
 }

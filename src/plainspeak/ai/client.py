@@ -212,8 +212,15 @@ class OpenAICompatClient:
             raise AIError(f"AI backend returned HTTP {e.response.status_code}.") from e
 
         data = resp.json()
-        text = data["choices"][0]["message"]["content"]
-        finish = data["choices"][0].get("finish_reason", "stop")
+        choices = data.get("choices")
+        if not choices:
+            err_msg = data.get("error", {})
+            if isinstance(err_msg, dict):
+                err_msg = err_msg.get("message", str(data))
+            log.error("OpenAI-compat no choices: %s", err_msg)
+            raise AIError(f"AI backend error: {err_msg}")
+        text = choices[0]["message"]["content"]
+        finish = choices[0].get("finish_reason", "stop")
         log.info("OpenAI-compat response model=%s finish_reason=%s", self._model, finish)
         return _OllamaResponse(text)
 

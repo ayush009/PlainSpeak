@@ -982,7 +982,7 @@ $("#btn-draft").addEventListener("click", (e) => run(e.target, async () => {
     setCase(await api(`/api/cases/${CASE_ID}/summary`, { method: "POST" }));
     window.toast?.('Draft ready — review and approve before sharing', 'success');
   } finally {
-    const btnLabel = backend === 'ollama' ? '<span>✦</span> Generate draft with AI' : '<span>✦</span> Generate draft with Claude';
+    const btnLabel = '<span>✦</span> Generate draft with AI';
     e.target.innerHTML = btnLabel;
     window.dismissToast?.(tid);
   }
@@ -1171,8 +1171,17 @@ renderHistoryPanel();
         updateCaseUI();
         await renderCaseList();
       } catch (_) {
-        // Case not found — create default without resetting any existing data
-        await loadCase(false, 'default');
+        // Case not found (server restarted and cleared /data) — re-seed the demo
+        try {
+          const demoView = await api('/api/demo/seed', { method: 'POST' });
+          CASE_ID = demoView.case.caseId;
+          localStorage.setItem('ps-active-case', CASE_ID);
+          setCase(demoView);
+          updateCaseUI();
+          await renderCaseList();
+        } catch (_2) {
+          await loadCase(false, 'default');
+        }
       }
     } else {
       // First visit — seed the demo so the app starts with a working example

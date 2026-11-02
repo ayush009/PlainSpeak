@@ -26,7 +26,7 @@ class Settings(BaseSettings):
 
     # OpenRouter (free cloud inference — https://openrouter.ai — takes priority when set)
     openrouter_api_key: str = ""
-    openrouter_model: str = "meta-llama/llama-3.3-70b-instruct:free"
+    openrouter_model: str = "meta-llama/llama-3.1-70b-instruct:free"
 
     # Voice
     reson8_api_key: str = ""
