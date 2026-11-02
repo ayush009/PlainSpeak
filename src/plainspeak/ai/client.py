@@ -138,10 +138,9 @@ class OpenAICompatClient:
     def __init__(self, base_url: str, model: str, api_key: str = "") -> None:
         self._base_url = base_url.rstrip("/")
         self._model = model
-        headers: dict[str, str] = {}
+        self._headers: dict[str, str] = {}
         if api_key:
-            headers["Authorization"] = f"Bearer {api_key}"
-        self._client = httpx.Client(timeout=180.0, headers=headers)
+            self._headers["Authorization"] = f"Bearer {api_key}"
 
     def create(
         self,
@@ -192,16 +191,17 @@ class OpenAICompatClient:
             openai_messages.append({"role": msg["role"], "content": text})
 
         try:
-            resp = self._client.post(
-                f"{self._base_url}/v1/chat/completions",
-                json={
-                    "model": self._model,
-                    "messages": openai_messages,
-                    "response_format": {"type": "json_object"},
-                    "temperature": 0.1,
-                    "stream": False,
-                },
-            )
+            with httpx.Client(timeout=180.0, headers=self._headers) as client:
+                resp = client.post(
+                    f"{self._base_url}/v1/chat/completions",
+                    json={
+                        "model": self._model,
+                        "messages": openai_messages,
+                        "response_format": {"type": "json_object"},
+                        "temperature": 0.1,
+                        "stream": False,
+                    },
+                )
             resp.raise_for_status()
         except httpx.ConnectError as e:
             raise AIError(
