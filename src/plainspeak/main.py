@@ -39,12 +39,13 @@ def create_app(settings: Settings | None = None, llm: LLM | None = None) -> Fast
     app.state.store = CaseStore(settings.cases_dir, settings.uploads_dir)
     if llm is not None:
         app.state.llm = llm
+    elif settings.groq_api_key:
+        # Groq is prioritised: free, fast, reliable HTTP responses (no TCP drops)
+        log.info("Using Groq backend: model=%s", settings.groq_model)
+        app.state.llm = GroqClient(settings)
     elif settings.openrouter_api_key:
         log.info("Using OpenRouter backend: model=%s", settings.openrouter_model)
         app.state.llm = OpenRouterClient(settings)
-    elif settings.groq_api_key:
-        log.info("Using Groq backend: model=%s", settings.groq_model)
-        app.state.llm = GroqClient(settings)
     elif settings.use_ollama or not settings.anthropic_api_key:
         log.info("Using Ollama backend: model=%s url=%s", settings.ollama_model, settings.ollama_base_url)
         app.state.llm = OllamaClient(settings)

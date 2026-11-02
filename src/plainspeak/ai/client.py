@@ -197,12 +197,14 @@ class OpenAICompatClient:
                     json={
                         "model": self._model,
                         "messages": openai_messages,
-                        "response_format": {"type": "json_object"},
+                        # response_format omitted — many free models reject it at the
+                        # connection level; the system prompt already enforces JSON output.
                         "temperature": 0.1,
                         "stream": False,
                     },
                 )
-            resp.raise_for_status()
+                resp.raise_for_status()
+                data = resp.json()
         except httpx.ConnectError as e:
             raise AIError(
                 f"Cannot reach AI backend at {self._base_url}. "
@@ -223,7 +225,6 @@ class OpenAICompatClient:
         except httpx.RequestError as e:
             raise AIError(f"AI backend connection error ({type(e).__name__}).") from e
 
-        data = resp.json()
         choices = data.get("choices")
         if not choices:
             err_msg = data.get("error", {})

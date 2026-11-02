@@ -13,6 +13,10 @@ services:
         value: production
       - key: PLAINSPEAK_DATA_DIR
         value: /data
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: llama-3.3-70b-versatile
       - key: OPENROUTER_API_KEY
         sync: false
       - key: OPENROUTER_MODEL
