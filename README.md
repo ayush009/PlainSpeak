@@ -1,6 +1,6 @@
 # PlainSpeak — AI-Powered Care Intelligence
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template?template=https://github.com/ayush009/PlainSpeak)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/ayush009/PlainSpeak)
 
 > **Bridging clinical expertise and everyday understanding — from the consultation room all the way home.**
 

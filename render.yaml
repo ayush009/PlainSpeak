@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: plainspeak
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: APP_ENV
+        value: production
+      - key: PLAINSPEAK_DATA_DIR
+        value: /data
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_MODEL
+        value: meta-llama/llama-3.1-70b-instruct:free
