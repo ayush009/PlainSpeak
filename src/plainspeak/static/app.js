@@ -879,67 +879,58 @@ class Pcm16Downsampler extends AudioWorkletProcessor {
 }
 registerProcessor("pcm16-downsampler", Pcm16Downsampler);`;
 
-const mic = { ws: null, capture: null, lastText: "", active: false };
+// ── Voice via browser Web Speech API (free, no API key needed) ────────────────
+const mic = { recognition: null, active: false };
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-async function startMic() {
-  if (consultation.active || consultation.starting || consultation.stopping) {
-    throw new Error("End the consultation before starting a caregiver question.");
+function startMic() {
+  if (!SpeechRecognition) {
+    throw new Error("Voice input is not supported in this browser. Try Chrome or Edge.");
   }
-  const token = await api("/api/voice/token", { method: "POST" });
-  const params = new URLSearchParams({ encoding: "pcm_s16le", sample_rate: "16000", channels: "1", language: "en" });
-  const ws = new WebSocket(`${token.turnsUrl}?${params}`, ["bearer", token.accessToken]);
-  ws.binaryType = "arraybuffer";
-  mic.ws = ws;
-  mic.lastText = "";
+  const recognition = new SpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.continuous = false;
+  recognition.interimResults = true;
 
-  ws.onmessage = (ev) => {
-    if (typeof ev.data !== "string") return;
-    const msg = JSON.parse(ev.data);
-    if (msg.type === "turn_end_candidate") {
-      mic.lastText = msg.text;
-      $("#interim").textContent = msg.text;
-    } else if (msg.type === "turn_end") {
-      const text = mic.lastText;
+  recognition.onstart = () => {
+    mic.active = true;
+    mic.recognition = recognition;
+    $("#btn-mic").textContent = "■ Stop listening";
+    $("#btn-mic").classList.add("recording");
+    $("#mic-status").textContent = "Listening… speak your question.";
+  };
+
+  recognition.onresult = (event) => {
+    const interim = Array.from(event.results).map(r => r[0].transcript).join("");
+    $("#interim").textContent = interim;
+    if (event.results[event.results.length - 1].isFinal) {
+      const finalText = interim.trim();
       stopMic();
-      run(null, () => sendQuestion(text));
+      if (finalText) run(null, () => sendQuestion(finalText));
     }
   };
-  ws.onclose = (ev) => {
-    if (mic.active) {
-      stopMic();
-      showError(`Speech connection closed (${ev.code}${ev.reason ? `: ${ev.reason}` : ""}). Use typed input as a fallback.`);
-    }
+
+  recognition.onerror = (event) => {
+    stopMic();
+    if (event.error !== "no-speech") showError(`Voice error: ${event.error}. Try typing instead.`);
   };
-  await new Promise((resolve, reject) => {
-    ws.onopen = resolve;
-    ws.onerror = () => reject(new Error("Could not connect to Reson8. Use typed input as a fallback."));
-  });
 
-  mic.capture = await createPcmCapture(ws);
+  recognition.onend = () => { if (mic.active) stopMic(); };
 
-  mic.active = true;
-  $("#btn-mic").textContent = "■ Finish question";
-  $("#btn-mic").classList.add("recording");
-  $("#mic-status").textContent = "Listening… the question is sent when you pause.";
+  recognition.start();
 }
 
 function stopMic() {
   mic.active = false;
-  mic.capture?.stop();
-  if (mic.ws && mic.ws.readyState <= WebSocket.OPEN) mic.ws.close(1000);
-  Object.assign(mic, { ws: null, capture: null });
+  mic.recognition?.stop();
+  mic.recognition = null;
   $("#btn-mic").textContent = "🎙 Start speaking";
   $("#btn-mic").classList.remove("recording");
   $("#mic-status").textContent = "";
+  $("#interim").textContent = "";
 }
 
-async function finishTurn() {
-  if (mic.ws?.readyState === WebSocket.OPEN) {
-    await mic.capture?.flush();
-    if (mic.ws?.readyState === WebSocket.OPEN) mic.ws.send(JSON.stringify({ type: "flush_request" }));
-  }
-  else stopMic();
-}
+function finishTurn() { stopMic(); }
 
 // ── wiring ────────────────────────────────────────────────────────────────────
 
@@ -1006,10 +997,8 @@ $("#chat-form").addEventListener("submit", (e) => {
 });
 
 $("#btn-mic").addEventListener("click", (e) => {
-  if (mic.active) run(e.target, finishTurn);
-  else run(e.target, async () => {
-    try { await startMic(); } catch (err) { stopMic(); throw err; }
-  });
+  if (mic.active) { stopMic(); return; }
+  try { startMic(); } catch (err) { showError(err.message); }
 });
 
 // History modal
@@ -1128,12 +1117,12 @@ async function fetchBackendInfo() {
       text.textContent = `Claude · ${short}`;
       badge.title = `Anthropic Claude · ${info.model}`;
     }
-    // Disable voice button if server has no voice key configured
-    if (!info.voice_enabled) {
+    // If browser doesn't support Web Speech API, disable the mic button
+    if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
       const micBtn = document.getElementById('btn-mic');
       if (micBtn) {
         micBtn.disabled = true;
-        micBtn.title = 'Voice not available — RESON8_API_KEY not configured';
+        micBtn.title = 'Voice not supported in this browser — use Chrome or Edge';
         micBtn.style.opacity = '0.45';
         micBtn.style.cursor = 'not-allowed';
       }
