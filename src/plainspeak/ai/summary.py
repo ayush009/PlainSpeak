@@ -11,13 +11,22 @@ from plainspeak.contracts import CareTask, Case, DraftSummary, SourceRef
 log = logging.getLogger(__name__)
 
 
+# Free-tier LLMs typically allow ~8 k tokens; cap passages so we stay well under that.
+_MAX_PASSAGES_PER_SOURCE = 60
+
+
 def _documents_prompt(case: Case) -> str:
     parts = []
     for source in case.sources:
+        passages = source.passages[:_MAX_PASSAGES_PER_SOURCE]
+        dropped = len(source.passages) - len(passages)
         lines = [
             f'<document sourceId="{source.id}" kind="{source.kind}" filename="{source.filename}">'
         ]
-        lines += [f'<passage passageId="{p.id}">{p.text}</passage>' for p in source.passages]
+        lines += [f'<passage passageId="{p.id}">{p.text}</passage>' for p in passages]
+        if dropped:
+            log.warning("Truncated %d passage(s) from source %s to stay within LLM context", dropped, source.id)
+            lines.append(f"<!-- {dropped} further passage(s) omitted to stay within model context -->")
         lines.append("</document>")
         parts.append("\n".join(lines))
     return (
