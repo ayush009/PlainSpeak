@@ -208,8 +208,20 @@ class OpenAICompatClient:
                 f"Cannot reach AI backend at {self._base_url}. "
                 "Check your connection or restart Ollama with `ollama serve`."
             ) from e
+        except httpx.TimeoutException as e:
+            raise AIError(
+                "AI request timed out — the model may be busy. Try again in a moment."
+            ) from e
         except httpx.HTTPStatusError as e:
-            raise AIError(f"AI backend returned HTTP {e.response.status_code}.") from e
+            body_text = ""
+            try:
+                body_text = e.response.json().get("error", {}).get("message", "")
+            except Exception:
+                pass
+            msg = f"AI backend returned HTTP {e.response.status_code}"
+            raise AIError(f"{msg}: {body_text}" if body_text else msg) from e
+        except httpx.RequestError as e:
+            raise AIError(f"AI backend connection error ({type(e).__name__}).") from e
 
         data = resp.json()
         choices = data.get("choices")
