@@ -22,7 +22,7 @@ class Settings(BaseSettings):
 
     # Groq (free cloud inference — https://console.groq.com)
     groq_api_key: str = ""
-    groq_model: str = "llama-3.1-70b-versatile"
+    groq_model: str = "llama-3.3-70b-versatile"
 
     # OpenRouter (free cloud inference — https://openrouter.ai — takes priority when set)
     openrouter_api_key: str = ""

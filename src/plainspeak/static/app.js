@@ -131,7 +131,7 @@ function postCareOpen() {
 
 function journeyStage() {
   if (postCareOpen()) return 3;
-  return caseView.case.sources.some((s) => s.kind === "document") ? 2 : 1;
+  return caseView.case.sources.some((s) => s.kind === "document" || s.kind === "consultation") ? 2 : 1;
 }
 
 function renderJourney() {
@@ -841,11 +841,14 @@ async function sendQuestion(text) {
 
   try {
     await api(`/api/cases/${CASE_ID}/chat`, { method: "POST", json: { text } });
-  } finally {
     document.getElementById('typing-indicator')?.remove();
     window.setAIState?.('speaking');
     setCase(await api(`/api/cases/${CASE_ID}`));
     setTimeout(() => window.setAIState?.('idle'), 3500);
+  } catch (err) {
+    document.getElementById('typing-indicator')?.remove();
+    window.setAIState?.('idle');
+    throw err;
   }
 }
 

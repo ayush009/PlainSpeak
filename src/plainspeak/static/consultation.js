@@ -149,7 +149,7 @@ function closeConsultationCapture() {
 
 async function startConsultation() {
   if (!$("#consult-consent").checked) throw new Error("Confirm participant consent before recording.");
-  if (mic.active || mic.ws) throw new Error("Finish the caregiver question first.");
+  if (mic.active) throw new Error("Finish the caregiver question first.");
   if (consultation.active || consultation.starting || consultation.stopping) return;
   consultation.starting = true;
   renderConsultationControls();
