@@ -318,6 +318,7 @@ class GeminiClient:
             "contents": contents,
             "generationConfig": {
                 "temperature": 0.1,
+                "maxOutputTokens": 4096,
                 "thinkingConfig": {"thinkingBudget": 0},
             },
         }
