@@ -7,8 +7,8 @@ from typing import Any
 from pydantic import ValidationError
 
 from plainspeak.ai import tools
-from plainspeak.ai.client import LLM, AIError, parse_json_output
-from plainspeak.ai.prompts import AGENT_REPLY_SCHEMA, CHAT_SYSTEM, TOOLS
+from plainspeak.ai.client import LLM, AIError, ClaudeClient, parse_json_output
+from plainspeak.ai.prompts import AGENT_REPLY_SCHEMA, CHAT_SYSTEM, CHAT_SYSTEM_DIRECT, TOOLS
 from plainspeak.contracts import AgentReply, Case
 from plainspeak.storage import CaseStore
 
@@ -22,6 +22,12 @@ def run_chat(llm: LLM, store: CaseStore, case_id: str, question: str) -> AgentRe
         context = tools.get_case_context(store, case_id, case_id)
     except tools.ToolError as e:
         raise AIError(str(e)) from e
+
+    # Non-Claude backends (Gemini, Groq, OpenRouter, Ollama) don't support tool calling.
+    # Use a single-turn path with context embedded directly in the user message.
+    if not isinstance(llm, ClaudeClient):
+        return _run_chat_direct(llm, store, context, case_id, question)
+
     messages: list[dict[str, Any]] = [
         {
             "role": "user",
@@ -65,6 +71,32 @@ def run_chat(llm: LLM, store: CaseStore, case_id: str, question: str) -> AgentRe
         messages.append({"role": "user", "content": results})
 
     raise AIError("The assistant did not finish within the allowed number of steps.")
+
+
+def _run_chat_direct(
+    llm: LLM, store: CaseStore, context: dict[str, Any], case_id: str, question: str
+) -> AgentReply:
+    """Single-turn chat path for backends without tool support (Gemini, Groq, etc.)."""
+    messages: list[dict[str, Any]] = [
+        {
+            "role": "user",
+            "content": (
+                f"Case ID: {case_id}\n\n<case_context>\n{json.dumps(context)}\n</case_context>"
+                f"\n\n<caregiver_message>\n{question}\n</caregiver_message>"
+            ),
+        }
+    ]
+    response = llm.create(
+        system=CHAT_SYSTEM_DIRECT,
+        messages=messages,
+        output_schema=AGENT_REPLY_SCHEMA,
+    )
+    data = parse_json_output(response)
+    try:
+        reply = AgentReply.model_validate(data)
+    except ValidationError as e:
+        raise AIError("AI reply did not match the expected format.") from e
+    return validate_reply(reply, store.load(case_id), [])
 
 
 def _execute(store: CaseStore, case_id: str, name: str, args: Any) -> dict[str, Any]:

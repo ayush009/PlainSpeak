@@ -342,7 +342,34 @@ function renderCaregiver() {
   const open = postCareOpen();
   $("#cg-locked").hidden = open;
   $("#cg-body").hidden = !open;
-  if (!open) return;
+  if (!open) {
+    // If there IS a prior approval but sources changed after it, give a specific message.
+    const approved = approvedVersion();
+    const lockedTitle = document.querySelector('#cg-locked h3');
+    const lockedDesc  = document.querySelector('#cg-locked p');
+    const lockedTag   = document.querySelector('#cg-locked .locked-tag');
+    const lockedBtn = document.getElementById('cg-locked-action');
+    if (approved && lockedTitle) {
+      lockedTitle.textContent = 'Care plan updated — re-approval needed';
+      if (lockedDesc) lockedDesc.textContent = 'New sources were added after the last approval. Generate a new draft in the clinician view and approve it to unlock at-home support.';
+      if (lockedTag)  lockedTag.textContent  = 'RE-APPROVAL REQUIRED';
+      if (!lockedBtn) {
+        const btn = document.createElement('button');
+        btn.id = 'cg-locked-action';
+        btn.className = 'secondary';
+        btn.style.marginTop = '12px';
+        btn.textContent = 'Go to Clinician View →';
+        btn.addEventListener('click', () => document.querySelector('.tab[data-tab="doctor"]')?.click());
+        document.getElementById('cg-locked')?.appendChild(btn);
+      }
+    } else if (lockedTitle) {
+      lockedTitle.textContent = 'Waiting for clinician approval';
+      if (lockedDesc) lockedDesc.textContent = 'Once the care team approves the instructions, the voice assistant and task checklist will become available here.';
+      if (lockedTag)  lockedTag.textContent  = 'CARE PLAN NOT YET APPROVED';
+      lockedBtn?.remove();
+    }
+    return;
+  }
 
   // Care plan summary strip
   const approved = approvedVersion();
