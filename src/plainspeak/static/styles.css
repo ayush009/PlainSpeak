@@ -1255,6 +1255,10 @@ input[type=file]::file-selector-button:hover { background: rgba(139,126,245,.25)
 .transcript-line.patient   { border-left-color: var(--violet); }
 .speaker-mapping { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
 .speaker-mapping select { width: auto; }
+.speaker-toggle-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 10px 0 4px; }
+.speaker-toggle-row .toggle-label { font-size: 0.72rem; letter-spacing: 0.08em; color: var(--muted, #888); text-transform: uppercase; }
+.spk-btn { padding: 4px 14px; border-radius: 999px; border: 1.5px solid rgba(139,126,245,.5); background: transparent; color: inherit; cursor: pointer; font-size: 0.82rem; transition: background .15s, color .15s; }
+.spk-btn.spk-active { background: var(--violet, #6c47ff); border-color: var(--violet, #6c47ff); color: #fff; }
 
 /* ===== CAREGIVER TAB ===== */
 .locked-card {

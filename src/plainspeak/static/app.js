@@ -868,11 +868,21 @@ async function sendQuestion(text) {
     conv.scrollTo({ top: conv.scrollHeight, behavior: 'smooth' });
   }
 
+  const wasVoice = mic.voiceInput;
+  mic.voiceInput = false;
   try {
     await api(`/api/cases/${CASE_ID}/chat`, { method: "POST", json: { text } });
     document.getElementById('typing-indicator')?.remove();
     window.setAIState?.('speaking');
     setCase(await api(`/api/cases/${CASE_ID}`));
+    // Auto-speak the AI reply when the question was asked by voice
+    if (wasVoice && window.readAloud) {
+      const lastMsg = caseView?.case.messages.at(-1);
+      if (lastMsg?.role === "assistant") {
+        window.readAloud(lastMsg.text, () => window.setAIState?.('idle'));
+        return;
+      }
+    }
     setTimeout(() => window.setAIState?.('idle'), 3500);
   } catch (err) {
     document.getElementById('typing-indicator')?.remove();
@@ -912,7 +922,7 @@ class Pcm16Downsampler extends AudioWorkletProcessor {
 registerProcessor("pcm16-downsampler", Pcm16Downsampler);`;
 
 // ── Voice via browser Web Speech API (free, no API key needed) ────────────────
-const mic = { recognition: null, active: false };
+const mic = { recognition: null, active: false, voiceInput: false };
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 function startMic() {
@@ -938,7 +948,10 @@ function startMic() {
     if (event.results[event.results.length - 1].isFinal) {
       const finalText = interim.trim();
       stopMic();
-      if (finalText) run(null, () => sendQuestion(finalText));
+      if (finalText) {
+        mic.voiceInput = true;
+        run(null, () => sendQuestion(finalText));
+      }
     }
   };
 

@@ -2,57 +2,13 @@
 
 // Realtime remains open across patient/clinician turns. Only finalized text is persisted.
 const consultation = {
-  active: false, starting: false, stopping: false, ws: null, capture: null,
+  active: false, starting: false, stopping: false,
+  ws: null, capture: null,
+  recognition: null,   // Web Speech API instance (replaces Reson8 WebSocket)
+  currentSpeaker: 0,   // 0 = clinician, 1 = patient
   sessionId: null, queue: Promise.resolve(), pending: new Map(), flushResolve: null,
 };
 const manualSessionId = `manual_${crypto.randomUUID()}`;
-
-async function createPcmCapture(ws) {
-  const stream = await navigator.mediaDevices.getUserMedia({
-    audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
-  });
-  let ctx;
-  try {
-    ctx = new AudioContext();
-    const blobUrl = URL.createObjectURL(new Blob([WORKLET], { type: "text/javascript" }));
-    try { await ctx.audioWorklet.addModule(blobUrl); } finally { URL.revokeObjectURL(blobUrl); }
-    const node = new AudioWorkletNode(ctx, "pcm16-downsampler");
-    const source = ctx.createMediaStreamSource(stream);
-    const analyser = ctx.createAnalyser();
-    analyser.fftSize = 128;
-    const silent = ctx.createGain();
-    silent.gain.value = 0;
-    source.connect(analyser);
-    analyser.connect(node);
-    node.connect(silent).connect(ctx.destination);
-    await ctx.resume();
-    let flushed = null;
-    node.port.onmessage = (e) => {
-      if (e.data?.flushed) { flushed?.(); return; }
-      if (ws.readyState === WebSocket.OPEN) ws.send(e.data);
-    };
-    return {
-      analyser,
-      async flush() {
-        source.disconnect();
-        await new Promise((resolve, reject) => {
-          const timer = setTimeout(() => reject(new Error("Audio buffer did not finish flushing.")), 2000);
-          flushed = () => { clearTimeout(timer); resolve(); };
-          node.port.postMessage("flush");
-        });
-      },
-      stop() {
-        stream.getTracks().forEach((track) => track.stop());
-        node.disconnect();
-        ctx.close();
-      },
-    };
-  } catch (err) {
-    stream.getTracks().forEach((track) => track.stop());
-    ctx?.close();
-    throw err;
-  }
-}
 
 function renderConsultation() {
   if (!caseView) return;
@@ -112,6 +68,29 @@ function renderConsultationControls() {
   $("#retry-transcript")?.addEventListener("click", (e) => run(e.target, async () => {
     for (const segment of [...consultation.pending.values()]) await queueConsultationSegment(segment);
   }));
+
+  // Speaker toggle — visible only during active Web Speech recording
+  const existingToggle = document.getElementById("consult-speaker-toggle");
+  if (consultation.active && consultation.recognition) {
+    if (!existingToggle) {
+      const toggle = document.createElement("div");
+      toggle.id = "consult-speaker-toggle";
+      toggle.className = "speaker-toggle-row";
+      toggle.innerHTML = `
+        <span class="toggle-label">Who is speaking</span>
+        <button type="button" class="spk-btn${consultation.currentSpeaker === 0 ? " spk-active" : ""}" data-spk="0">◉ Clinician</button>
+        <button type="button" class="spk-btn${consultation.currentSpeaker === 1 ? " spk-active" : ""}" data-spk="1">♡ Patient</button>`;
+      toggle.querySelectorAll(".spk-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          consultation.currentSpeaker = Number(btn.dataset.spk);
+          toggle.querySelectorAll(".spk-btn").forEach((b) => b.classList.toggle("spk-active", b === btn));
+        });
+      });
+      document.getElementById("consult-interim")?.before(toggle);
+    }
+  } else if (existingToggle) {
+    existingToggle.remove();
+  }
 }
 
 function queueConsultationSegment(segment, roles = {}) {
@@ -136,6 +115,11 @@ function queueConsultationSegment(segment, roles = {}) {
 function closeConsultationCapture() {
   consultation.capture?.stop();
   consultation.capture = null;
+  if (consultation.recognition) {
+    consultation.recognition.onend = null;  // prevent auto-restart loop
+    try { consultation.recognition.stop(); } catch {}
+    consultation.recognition = null;
+  }
   const ws = consultation.ws;
   consultation.ws = null;
   consultation.active = false;
@@ -151,64 +135,85 @@ async function startConsultation() {
   if (!$("#consult-consent").checked) throw new Error("Confirm participant consent before recording.");
   if (mic.active) throw new Error("Finish the caregiver question first.");
   if (consultation.active || consultation.starting || consultation.stopping) return;
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    $("#consult-status").textContent = "Live capture unavailable — use transcript upload or manual entry below.";
+    return;
+  }
+
   consultation.starting = true;
   renderConsultationControls();
-  $("#consult-status").textContent = "Connecting to live transcription…";
+  consultation.sessionId = crypto.randomUUID();
+
   try {
-    const token = await api("/api/voice/token", { method: "POST" });
-    const params = new URLSearchParams({
-      encoding: "pcm_s16le", sample_rate: "16000", channels: "1",
-      language: $("#consult-language").value, diarize: "true", max_speakers: "2",
-      include_interim: "true", include_timestamps: "true",
-    });
-    consultation.sessionId = crypto.randomUUID();
-    const ws = new WebSocket(`${token.realtimeUrl}?${params}`, ["bearer", token.accessToken]);
-    consultation.ws = ws;
-    ws.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        if (message.type === "flush_confirmation") { consultation.flushResolve?.(); return; }
-        if (message.type !== "transcript") return;
-        if (message.is_final === false) {
-          $("#consult-interim").textContent = message.text;
-          return;
+    // Request mic permission explicitly so the browser shows a clear prompt
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach((t) => t.stop());
+
+    const recognition = new SpeechRecognition();
+    const lang = $("#consult-language").value;
+    recognition.lang = lang === "de" || lang === "de,en" ? "de-DE" : "en-US";
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognition.onresult = (event) => {
+      const interim = Array.from(event.results)
+        .slice(event.resultIndex)
+        .map((r) => r[0].transcript)
+        .join("");
+      $("#consult-interim").textContent = interim;
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          const text = event.results[i][0].transcript.trim();
+          if (!text) continue;
+          const speakerId = consultation.currentSpeaker;
+          const roles = {
+            [`${consultation.sessionId}:0`]: "clinician",
+            [`${consultation.sessionId}:1`]: "patient",
+          };
+          queueConsultationSegment({
+            id: `seg_${crypto.randomUUID()}`,
+            sessionId: consultation.sessionId,
+            text,
+            speakerId,
+            startMs: null,
+            durationMs: null,
+          }, roles).catch(() => {});
+          $("#consult-interim").textContent = "";
         }
-        $("#consult-interim").textContent = "";
-        if (!message.text?.trim()) return;
-        queueConsultationSegment({
-          id: `seg_${crypto.randomUUID()}`, sessionId: consultation.sessionId,
-          text: message.text, speakerId: message.speaker_id ?? null,
-          startMs: message.start_ms == null ? null : Math.round(message.start_ms),
-          durationMs: message.duration_ms == null ? null : Math.round(message.duration_ms),
-        }).catch(() => {});
-      } catch (err) { showError(`Could not process transcript: ${err.message}`); }
-    };
-    ws.onclose = (event) => {
-      if (consultation.ws === ws && (consultation.active || consultation.starting || consultation.stopping)) {
-        closeConsultationCapture();
-        $("#consult-status").textContent = "Connection closed; saved transcript is preserved.";
-        showError(`Consultation disconnected (${event.code}). Start again to continue. The newest buffered audio may be missing.`);
       }
     };
-    await new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error("Speech connection timed out.")), 12000);
-      ws.onopen = () => { clearTimeout(timer); resolve(); };
-      ws.onerror = () => { clearTimeout(timer); reject(new Error("Could not connect to Reson8 Realtime.")); };
-    });
-    consultation.capture = await createPcmCapture(ws);
-    if (ws.readyState !== WebSocket.OPEN) throw new Error("Speech connection closed during microphone setup.");
+
+    recognition.onerror = (event) => {
+      if (event.error === "no-speech" || event.error === "aborted") return;
+      closeConsultationCapture();
+      showError(`Voice error: ${event.error}. Use manual entry below.`);
+    };
+
+    // Browser stops after silence — restart to stay continuous
+    recognition.onend = () => {
+      if (consultation.active && !consultation.stopping) {
+        try { consultation.recognition?.start(); } catch {}
+      }
+    };
+
+    recognition.start();
+    consultation.recognition = recognition;
     consultation.active = true;
     consultation.starting = false;
-    window.toast?.('Recording started — both speakers are being captured', 'info', 3000);
-    window.startWaveform?.(consultation.capture.analyser);
+
     window.startRecordingTimer?.();
-    $("#consult-status").textContent = "Listening to both speakers. Finalized lines save automatically.";
+    window.toast?.("Recording started — tap Clinician or Patient below to mark who is speaking", "info", 5000);
+    $("#consult-status").textContent = "Listening. Tap Clinician or Patient below to mark who is speaking.";
     renderConsultationControls();
   } catch (err) {
     closeConsultationCapture();
-    $("#consult-status").textContent = "Live capture unavailable. Use manual entry below.";
-    // Swallow config errors (no Reson8 key) — they're expected, not user-facing bugs
-    if (err.message?.toLowerCase().includes('configured') || err.message?.toLowerCase().includes('reson8')) return;
+    if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError" || err.name === "NotFoundError") {
+      $("#consult-status").textContent = "Microphone access denied. Use manual entry below.";
+      return;
+    }
     throw err;
   }
 }
@@ -217,23 +222,18 @@ async function endConsultation() {
   if (!consultation.active || consultation.stopping) return;
   consultation.stopping = true;
   renderConsultationControls();
-  $("#consult-status").textContent = "Finalizing audio and saving transcript…";
+  $("#consult-status").textContent = "Saving transcript…";
   try {
-    await consultation.capture.flush();
-    await new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error("Final transcript timed out. Saved lines remain available.")), 12000);
-      consultation.flushResolve = () => { clearTimeout(timer); resolve(); };
-      if (consultation.ws?.readyState !== WebSocket.OPEN) {
-        clearTimeout(timer); reject(new Error("Speech connection closed before finalization.")); return;
-      }
-      consultation.ws.send(JSON.stringify({ type: "flush_request", id: crypto.randomUUID() }));
-    });
+    if (consultation.recognition) {
+      consultation.recognition.onend = null;
+      try { consultation.recognition.stop(); } catch {}
+      consultation.recognition = null;
+    }
     await consultation.queue;
     if (consultation.pending.size) throw new Error("Some transcript lines still need saving. Use Retry saving transcript.");
-    window.toast?.('Consultation saved — confirm speaker roles, then generate a draft', 'success');
+    window.toast?.("Consultation saved — confirm speaker roles, then generate a draft", "success");
     $("#consult-status").textContent = "Consultation saved. Confirm speaker roles, then add the document and generate a draft.";
   } finally {
-    consultation.flushResolve = null;
     closeConsultationCapture();
     consultation.stopping = false;
     renderConsultationControls();
@@ -271,13 +271,13 @@ $("#btn-transcript-pdf").addEventListener("click", (event) => run(event.target, 
     ? `Imported ${fresh} line(s) from ${file.name} across ${voices} voice(s)${replaced}. Confirm each voice before reviewing the draft.`
     : `${file.name} was already imported; nothing changed.`;
   $("#consult-status").textContent = statusMsg;
-  window.toast?.(fresh ? `${fresh} transcript lines imported from ${file.name}` : `${file.name} already imported — nothing changed`, fresh ? 'success' : 'warning');
+  window.toast?.(fresh ? `${fresh} transcript lines imported from ${file.name}` : `${file.name} already imported — nothing changed`, fresh ? "success" : "warning");
 }));
 $("#btn-clear-transcript").addEventListener("click", (event) => run(event.target, async () => {
   if (!confirm("Clear the saved consultation transcript? This cannot be undone.")) return;
   setCase(await api(`/api/cases/${CASE_ID}/transcript/clear`, { method: "POST" }));
   $("#consult-status").textContent = "";
-  window.toast?.('Transcript cleared', 'warning');
+  window.toast?.("Transcript cleared", "warning");
 }));
 window.addEventListener("beforeunload", (event) => {
   if (consultation.active || consultation.starting || consultation.stopping || consultation.pending.size) {
