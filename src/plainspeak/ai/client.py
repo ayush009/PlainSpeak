@@ -139,6 +139,7 @@ class OpenAICompatClient:
         self._base_url = base_url.rstrip("/")
         self._completions_url = self._base_url + "/v1/chat/completions"
         self._model = model
+        self._extra_json: dict[str, Any] = {}
         self._headers: dict[str, str] = {}
         if api_key:
             self._headers["Authorization"] = f"Bearer {api_key}"
@@ -193,17 +194,16 @@ class OpenAICompatClient:
 
         try:
             with httpx.Client(timeout=180.0, headers=self._headers) as client:
-                resp = client.post(
-                    self._completions_url,
-                    json={
-                        "model": self._model,
-                        "messages": openai_messages,
-                        # response_format omitted — many free models reject it at the
-                        # connection level; the system prompt already enforces JSON output.
-                        "temperature": 0.1,
-                        "stream": False,
-                    },
-                )
+                body: dict[str, Any] = {
+                    "model": self._model,
+                    "messages": openai_messages,
+                    # response_format omitted — many free models reject it at the
+                    # connection level; the system prompt already enforces JSON output.
+                    "temperature": 0.1,
+                    "stream": False,
+                }
+                body.update(self._extra_json)
+                resp = client.post(self._completions_url, json=body)
                 resp.raise_for_status()
                 data = resp.json()
         except httpx.ConnectError as e:
@@ -281,3 +281,5 @@ class GeminiClient(OpenAICompatClient):
         self._completions_url = (
             "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
         )
+        # Disable thinking mode on reasoning models (e.g. gemini-3.8-flash) for speed
+        self._extra_json = {"thinking": {"thinking_budget": 0}}
