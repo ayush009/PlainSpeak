@@ -166,12 +166,11 @@ class Case(Contract):
         ]
 
     def post_care_ready(self) -> bool:
+        # AT-HOME is available as long as an approved version covers the current sources.
+        # Generating a new draft (workflow_state → awaiting_review) must not lock caregivers
+        # out — the last approved version is still valid until sources actually change.
         approved = self.approved()
-        return bool(
-            approved
-            and self.workflow_state in ("approved", "post_care_active")
-            and approved.input_revision == self.input_revision
-        )
+        return bool(approved and approved.input_revision == self.input_revision)
 
     def approved(self) -> SummaryVersion | None:
         if self.approved_summary_version is None:

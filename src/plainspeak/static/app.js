@@ -126,7 +126,9 @@ function approvedVersion() {
 function postCareOpen() {
   const c = caseView.case;
   const approved = approvedVersion();
-  return !!approved && c.workflowState !== "awaiting_review" && approved.inputRevision === c.inputRevision;
+  // workflowState is intentionally not checked: generating a new draft resets it to
+  // "awaiting_review" but must not lock caregivers out of the last approved version.
+  return !!approved && approved.inputRevision === c.inputRevision;
 }
 
 function journeyStage() {
