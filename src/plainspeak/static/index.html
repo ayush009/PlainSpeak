@@ -451,14 +451,14 @@
                   <div class="card-heading-copy">
                     <div class="card-kicker" data-i18n="c3-kicker">AI-ASSISTED REVIEW</div>
                     <h3 data-i18n="c3-title">Review the draft together</h3>
-                    <p data-i18n="c3-desc">Claude organises instructions into a reviewable draft. A clinician must approve it.</p>
+                    <p data-i18n="c3-desc">AI organises instructions into a reviewable draft. A clinician must approve it.</p>
                   </div>
                 </div>
                 <div class="ai-note">
                   <span>✦</span>
                   <p><strong data-i18n="c3-note-strong">Human review stays in control.</strong> <span data-i18n="c3-note-text">AI-generated instructions are drafts, not medical decisions.</span></p>
                 </div>
-                <button id="btn-draft" class="button-primary"><span>✦</span> <span data-i18n="c3-btn">Generate draft with Claude</span></button>
+                <button id="btn-draft" class="button-primary"><span>✦</span> <span data-i18n="c3-btn">Generate draft with AI</span></button>
                 <div id="draft" class="draft-content"><p class="empty-state" data-i18n="c3-empty">Upload a document and save a consultation to prepare a draft.</p></div>
               </article>
 
@@ -1033,8 +1033,8 @@
           'c1-pill':' VOICE INPUT','c1-consent':'Both participants consent to transcription of this consultation.','c1-lang-label':'LANGUAGE',
           'c2-kicker':'SOURCE MATERIAL','c2-title':'Add the discharge document','c2-desc':'Use the written instructions as the source of truth.',
           'c2-upload-title':'Choose a discharge PDF','c2-upload-sub':'PDF document · max 10 MB','c2-btn':'Upload PDF','c2-hint':'One discharge document per case. Uploading replaces the previous one.',
-          'c3-kicker':'AI-ASSISTED REVIEW','c3-title':'Review the draft together','c3-desc':'Claude organises instructions into a reviewable draft. A clinician must approve it.',
-          'c3-note-strong':'Human review stays in control.','c3-note-text':'AI-generated instructions are drafts, not medical decisions.','c3-btn':'Generate draft with Claude','c3-empty':'Upload a document and save a consultation to prepare a draft.',
+          'c3-kicker':'AI-ASSISTED REVIEW','c3-title':'Review the draft together','c3-desc':'AI organises instructions into a reviewable draft. A clinician must approve it.',
+          'c3-note-strong':'Human review stays in control.','c3-note-text':'AI-generated instructions are drafts, not medical decisions.','c3-btn':'Generate draft with AI','c3-empty':'Upload a document and save a consultation to prepare a draft.',
           'c4-kicker':'CLINICIAN-VERIFIED','c4-title':'Approved care instructions','c4-desc':'Only the current approved version unlocks the at-home experience.','c4-empty':'Nothing approved yet.',
           'trust-title':'Designed for trust','trust-p1':'Evidence-linked','trust-p1-sub':'Answers point back to source passages.','trust-p2':'Human-approved','trust-p2-sub':'Care instructions need clinician approval.','trust-p3':'Honest about gaps','trust-p3-sub':'Unanswered questions stay unresolved.',
           'quote-text':"Understanding care shouldn't end when the appointment does.",'quote-attr':'THE PLAINSPEAK PRINCIPLE',
@@ -1053,8 +1053,8 @@
           'c1-pill':' SPRACHEINGABE','c1-consent':'Beide Teilnehmer stimmen der Transkription dieser Konsultation zu.','c1-lang-label':'SPRACHE',
           'c2-kicker':'QUELLMATERIAL','c2-title':'Entlassungsdokument hinzufügen','c2-desc':'Die schriftlichen Anweisungen als maßgebliche Quelle verwenden.',
           'c2-upload-title':'Entlassungs-PDF auswählen','c2-upload-sub':'PDF-Dokument · max 10 MB','c2-btn':'PDF hochladen','c2-hint':'Ein Entlassungsdokument pro Fall. Hochladen ersetzt das vorherige.',
-          'c3-kicker':'KI-GESTÜTZTE ÜBERPRÜFUNG','c3-title':'Entwurf gemeinsam überprüfen','c3-desc':'Claude strukturiert Anweisungen in einen überprüfbaren Entwurf. Ein Arzt muss ihn genehmigen.',
-          'c3-note-strong':'Menschliche Kontrolle bleibt erhalten.','c3-note-text':'KI-generierte Anweisungen sind Entwürfe, keine medizinischen Entscheidungen.','c3-btn':'Entwurf mit Claude erstellen','c3-empty':'Dokument hochladen und Konsultation speichern, um einen Entwurf zu erstellen.',
+          'c3-kicker':'KI-GESTÜTZTE ÜBERPRÜFUNG','c3-title':'Entwurf gemeinsam überprüfen','c3-desc':'KI strukturiert Anweisungen in einen überprüfbaren Entwurf. Ein Arzt muss ihn genehmigen.',
+          'c3-note-strong':'Menschliche Kontrolle bleibt erhalten.','c3-note-text':'KI-generierte Anweisungen sind Entwürfe, keine medizinischen Entscheidungen.','c3-btn':'Entwurf mit KI erstellen','c3-empty':'Dokument hochladen und Konsultation speichern, um einen Entwurf zu erstellen.',
           'c4-kicker':'ÄRZTLICH GEPRÜFT','c4-title':'Genehmigte Pflegeanweisungen','c4-desc':'Nur die aktuelle genehmigte Version schaltet die Heimansicht frei.','c4-empty':'Noch nichts genehmigt.',
           'trust-title':'Vertrauen als Grundprinzip','trust-p1':'Evidenzbasiert','trust-p1-sub':'Antworten verweisen auf Quellabschnitte.','trust-p2':'Menschlich geprüft','trust-p2-sub':'Pflegeanweisungen benötigen ärztliche Genehmigung.','trust-p3':'Ehrlich bei Lücken','trust-p3-sub':'Unbeantwortete Fragen bleiben offen.',
           'quote-text':'Das Verständnis der Pflege sollte nicht enden, wenn der Termin endet.','quote-attr':'DAS PLAINSPEAK-PRINZIP',
@@ -1271,7 +1271,7 @@
       const QUICK_ACTIONS = [
         { icon: '＋', name: 'New patient case',      sub: 'Start a fresh case',         action: () => document.getElementById('btn-new-case') && document.getElementById('btn-new-case').click() },
         { icon: '⬆', name: 'Upload discharge PDF',  sub: 'Add a source document',       action: () => document.getElementById('file')      && document.getElementById('file').click()      },
-        { icon: '✦', name: 'Generate draft',         sub: 'Run AI review with Claude',   action: () => document.getElementById('btn-draft') && document.getElementById('btn-draft').click() },
+        { icon: '✦', name: 'Generate draft',         sub: 'Run AI review',               action: () => document.getElementById('btn-draft') && document.getElementById('btn-draft').click() },
         { icon: '✓', name: 'Approve instructions',   sub: 'Mark current draft approved', action: () => document.getElementById('btn-approve')  && document.getElementById('btn-approve').click()  },
         { icon: '◎', name: 'Toggle Intelligence Rail', sub: 'Show/hide the side panel', action: () => document.getElementById('btn-ir-toggle') && document.getElementById('btn-ir-toggle').click() },
       ];

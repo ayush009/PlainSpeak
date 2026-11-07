@@ -137,6 +137,7 @@ class OpenAICompatClient:
 
     def __init__(self, base_url: str, model: str, api_key: str = "") -> None:
         self._base_url = base_url.rstrip("/")
+        self._completions_url = self._base_url + "/v1/chat/completions"
         self._model = model
         self._headers: dict[str, str] = {}
         if api_key:
@@ -193,7 +194,7 @@ class OpenAICompatClient:
         try:
             with httpx.Client(timeout=180.0, headers=self._headers) as client:
                 resp = client.post(
-                    f"{self._base_url}/v1/chat/completions",
+                    self._completions_url,
                     json={
                         "model": self._model,
                         "messages": openai_messages,
@@ -264,4 +265,19 @@ class OpenRouterClient(OpenAICompatClient):
             "https://openrouter.ai/api",
             settings.openrouter_model,
             settings.openrouter_api_key,
+        )
+
+
+class GeminiClient(OpenAICompatClient):
+    """Google Gemini via AI Studio — free tier, 1 500 req/day, OpenAI-compatible."""
+
+    def __init__(self, settings: Settings) -> None:
+        super().__init__(
+            "https://generativelanguage.googleapis.com/v1beta/openai",
+            settings.gemini_model,
+            settings.gemini_api_key,
+        )
+        # Gemini's path omits the /v1 prefix used by other providers
+        self._completions_url = (
+            "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
         )

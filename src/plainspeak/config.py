@@ -20,11 +20,15 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "llama3.1"
 
+    # Gemini (Google AI Studio — https://aistudio.google.com — free, 1500 req/day)
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-2.0-flash"
+
     # Groq (free cloud inference — https://console.groq.com)
     groq_api_key: str = ""
     groq_model: str = "llama-3.3-70b-versatile"
 
-    # OpenRouter (free cloud inference — https://openrouter.ai — takes priority when set)
+    # OpenRouter (free cloud inference — https://openrouter.ai)
     openrouter_api_key: str = ""
     openrouter_model: str = "meta-llama/llama-3.1-70b-instruct:free"
 
