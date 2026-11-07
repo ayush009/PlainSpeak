@@ -281,5 +281,3 @@ class GeminiClient(OpenAICompatClient):
         self._completions_url = (
             "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
         )
-        # Pass thinking_budget=0 to disable reasoning mode for faster responses
-        self._extra_json = {"thinking_budget": 0}
