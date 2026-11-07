@@ -16,7 +16,7 @@ services:
       - key: GEMINI_API_KEY
         sync: false
       - key: GEMINI_MODEL
-        value: gemini-flash-latest
+        value: gemini-2.0-flash
       - key: GROQ_API_KEY
         sync: false
       - key: GROQ_MODEL
