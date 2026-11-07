@@ -976,10 +976,8 @@ $("#btn-upload").addEventListener("click", (e) => run(e.target, async () => {
 
 $("#btn-draft").addEventListener("click", (e) => run(e.target, async () => {
   e.target.innerHTML = "Drafting…";
-  const backend = document.getElementById('ai-badge')?.dataset.backend || 'claude';
-  const label = backend === 'ollama'
-    ? `Ollama (${document.getElementById('ai-badge-text')?.textContent || 'local AI'}) is generating your care draft…`
-    : 'Claude is generating your care draft…';
+  const badgeText = document.getElementById('ai-badge-text')?.textContent || 'AI';
+  const label = `${badgeText} is generating your care draft…`;
   const tid = window.toast?.(label, 'info', 0);
   try {
     setCase(await api(`/api/cases/${CASE_ID}/summary`, { method: "POST" }));
@@ -1100,7 +1098,12 @@ async function fetchBackendInfo() {
     const draftBtn = document.getElementById('btn-draft');
     if (!badge || !text || !info.backend) return;
     badge.dataset.backend = info.backend;
-    if (info.backend === 'openrouter') {
+    if (info.backend === 'gemini') {
+      const short = (info.model || 'gemini').replace('gemini-', '');
+      text.textContent = `Gemini · ${short}`;
+      badge.title = `Google Gemini · ${info.model} · free tier`;
+      if (draftBtn) draftBtn.innerHTML = '<span>✦</span> Generate draft with AI';
+    } else if (info.backend === 'openrouter') {
       const short = (info.model || 'openrouter').split('/').pop()?.replace(/:free$/, '') || 'openrouter';
       text.textContent = `OpenRouter · ${short}`;
       badge.title = `OpenRouter · ${info.model} · free`;
@@ -1116,9 +1119,10 @@ async function fetchBackendInfo() {
       badge.title = `Local AI · Ollama · ${info.model}`;
       if (draftBtn) draftBtn.innerHTML = '<span>✦</span> Generate draft with AI';
     } else {
-      const short = (info.model || 'claude').replace('claude-', '').replace(/-\d{4}-\d{2}-\d{2}$/, '');
-      text.textContent = `Claude · ${short}`;
-      badge.title = `Anthropic Claude · ${info.model}`;
+      const short = (info.model || 'ai').replace('claude-', '').replace(/-\d{4}-\d{2}-\d{2}$/, '');
+      text.textContent = `AI · ${short}`;
+      badge.title = `AI · ${info.model}`;
+      if (draftBtn) draftBtn.innerHTML = '<span>✦</span> Generate draft with AI';
     }
     // If browser doesn't support Web Speech API, disable the mic button
     if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
