@@ -268,16 +268,88 @@ class OpenRouterClient(OpenAICompatClient):
         )
 
 
-class GeminiClient(OpenAICompatClient):
-    """Google Gemini via AI Studio — free tier, 1 500 req/day, OpenAI-compatible."""
+class GeminiClient:
+    """Google Gemini via native API — supports all models, thinking disabled for speed."""
 
     def __init__(self, settings: Settings) -> None:
-        super().__init__(
-            "https://generativelanguage.googleapis.com/v1beta/openai",
-            settings.gemini_model,
-            settings.gemini_api_key,
+        self._model = settings.gemini_model
+        self._api_key = settings.gemini_api_key
+
+    def create(
+        self,
+        *,
+        system: str,
+        messages: list[dict[str, Any]],
+        output_schema: dict[str, Any],
+        tools: list[dict[str, Any]] | None = None,
+    ) -> _OllamaResponse:
+        if tools:
+            log.debug("Gemini: %d tool definition(s) ignored (not supported)", len(tools))
+        # Flatten messages to Gemini native format (role: user/model)
+        contents = []
+        for msg in messages:
+            content = msg["content"]
+            if isinstance(content, list):
+                parts: list[str] = []
+                for block in content:
+                    if isinstance(block, dict) and block.get("type") == "text":
+                        parts.append(block.get("text", ""))
+                    elif hasattr(block, "type") and block.type == "text":
+                        parts.append(block.text)
+                text = "\n".join(filter(None, parts))
+            else:
+                text = str(content)
+            role = "model" if msg["role"] == "assistant" else "user"
+            contents.append({"role": role, "parts": [{"text": text}]})
+
+        system_with_schema = (
+            system
+            + "\n\n# Output format\nRespond with ONLY a single valid JSON object — "
+            "no markdown fences, no explanation. The JSON must conform to this schema:\n"
+            + json.dumps(output_schema, indent=2)
         )
-        # Gemini's path omits the /v1 prefix used by other providers
-        self._completions_url = (
-            "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+
+        url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models"
+            f"/{self._model}:generateContent"
         )
+        body: dict[str, Any] = {
+            "system_instruction": {"parts": [{"text": system_with_schema}]},
+            "contents": contents,
+            "generationConfig": {
+                "temperature": 0.1,
+                "thinkingConfig": {"thinkingBudget": 0},
+            },
+        }
+        try:
+            with httpx.Client(timeout=180.0) as client:
+                resp = client.post(
+                    url,
+                    json=body,
+                    headers={
+                        "Content-Type": "application/json",
+                        "X-goog-api-key": self._api_key,
+                    },
+                )
+                resp.raise_for_status()
+                data = resp.json()
+        except httpx.TimeoutException as e:
+            raise AIError("AI request timed out. Try again in a moment.") from e
+        except httpx.HTTPStatusError as e:
+            body_text = ""
+            try:
+                body_text = e.response.json().get("error", {}).get("message", "")
+            except Exception:
+                pass
+            msg_str = f"Gemini API returned HTTP {e.response.status_code}"
+            raise AIError(f"{msg_str}: {body_text}" if body_text else msg_str) from e
+        except httpx.RequestError as e:
+            raise AIError(f"Could not reach Gemini API ({type(e).__name__}).") from e
+
+        try:
+            text = data["candidates"][0]["content"]["parts"][0]["text"]
+        except (KeyError, IndexError) as e:
+            raise AIError("Gemini returned an unexpected response format.") from e
+        finish = data["candidates"][0].get("finishReason", "STOP")
+        log.info("Gemini response model=%s finishReason=%s", self._model, finish)
+        return _OllamaResponse(text)
