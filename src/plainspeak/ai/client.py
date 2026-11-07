@@ -268,6 +268,88 @@ class OpenRouterClient(OpenAICompatClient):
         )
 
 
+class TUBSClient:
+    """TU Braunschweig KI-Toolbox — GPT-4o via university API (free for TUBS students)."""
+
+    def __init__(self, settings: Settings) -> None:
+        self._api_key = settings.tubs_api_key
+        self._model = settings.tubs_model
+        self._url = "https://ki-toolbox.tu-braunschweig.de/api/v1/chat/send"
+
+    def create(
+        self,
+        *,
+        system: str,
+        messages: list[dict[str, Any]],
+        output_schema: dict[str, Any],
+        tools: list[dict[str, Any]] | None = None,
+    ) -> _OllamaResponse:
+        if tools:
+            log.debug("TUBS: %d tool definition(s) ignored (not supported)", len(tools))
+
+        # Flatten message history to a single prompt string
+        parts: list[str] = []
+        for msg in messages:
+            content = msg["content"]
+            if isinstance(content, str):
+                parts.append(content)
+            elif isinstance(content, list):
+                for block in content:
+                    if isinstance(block, dict) and block.get("type") == "text":
+                        parts.append(block.get("text", ""))
+                    elif hasattr(block, "type") and block.type == "text":
+                        parts.append(block.text)
+        prompt = "\n\n".join(filter(None, parts))
+
+        system_with_schema = (
+            system
+            + "\n\n# Output format\nRespond with ONLY a single valid JSON object — "
+            "no markdown fences, no explanation. The JSON must conform to this schema:\n"
+            + json.dumps(output_schema, indent=2)
+        )
+
+        body: dict[str, Any] = {
+            "thread": None,
+            "prompt": prompt,
+            "customInstructions": system_with_schema,
+            "model": self._model,
+        }
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": f"Bearer {self._api_key}",
+        }
+
+        try:
+            full_text = ""
+            with httpx.Client(timeout=120.0) as client:
+                with client.stream("POST", self._url, json=body, headers=headers) as resp:
+                    resp.raise_for_status()
+                    for line in resp.iter_lines():
+                        if not line.strip():
+                            continue
+                        try:
+                            obj = json.loads(line)
+                            if obj.get("type") == "chunk":
+                                full_text += obj.get("content", "")
+                        except json.JSONDecodeError:
+                            pass
+        except httpx.TimeoutException as e:
+            raise AIError("TUBS AI request timed out. Try again in a moment.") from e
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 401:
+                raise AIError("TUBS API key is missing or invalid. Check TUBS_API_KEY in .env.") from e
+            raise AIError(f"TUBS API returned HTTP {e.response.status_code}.") from e
+        except httpx.RequestError as e:
+            raise AIError(f"Could not reach TUBS API ({type(e).__name__}).") from e
+
+        if not full_text.strip():
+            raise AIError("TUBS API returned an empty response.")
+
+        log.info("TUBS response model=%s chars=%d", self._model, len(full_text))
+        return _OllamaResponse(full_text)
+
+
 class GeminiClient:
     """Google Gemini via native API — supports all models, thinking disabled for speed."""
 

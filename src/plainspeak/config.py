@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "llama3.1"
 
+    # TU Braunschweig KI-Toolbox (free for TUBS students — ki-toolbox.tu-braunschweig.de)
+    tubs_api_key: str = ""
+    tubs_model: str = "gpt-4o"
+
     # Gemini (Google AI Studio — https://aistudio.google.com — free, 1500 req/day)
     gemini_api_key: str = ""
     gemini_model: str = "gemini-3.8-flash"

@@ -1125,7 +1125,11 @@ async function fetchBackendInfo() {
     const draftBtn = document.getElementById('btn-draft');
     if (!badge || !text || !info.backend) return;
     badge.dataset.backend = info.backend;
-    if (info.backend === 'gemini') {
+    if (info.backend === 'tubs') {
+      text.textContent = `GPT-4o · TUBS`;
+      badge.title = `TU Braunschweig KI-Toolbox · ${info.model} · university access`;
+      if (draftBtn) draftBtn.innerHTML = '<span>✦</span> Generate draft with AI';
+    } else if (info.backend === 'gemini') {
       const short = (info.model || 'gemini').replace('gemini-', '');
       text.textContent = `Gemini · ${short}`;
       badge.title = `Google Gemini · ${info.model} · free tier`;

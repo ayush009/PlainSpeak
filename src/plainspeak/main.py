@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from plainspeak.ai.client import LLM, ClaudeClient, GeminiClient, GroqClient, OllamaClient, OpenRouterClient
+from plainspeak.ai.client import LLM, ClaudeClient, GeminiClient, GroqClient, OllamaClient, OpenRouterClient, TUBSClient
 from plainspeak.api import router
 from plainspeak.config import Settings, get_settings
 from plainspeak.storage import CaseStore
@@ -39,6 +39,9 @@ def create_app(settings: Settings | None = None, llm: LLM | None = None) -> Fast
     app.state.store = CaseStore(settings.cases_dir, settings.uploads_dir)
     if llm is not None:
         app.state.llm = llm
+    elif settings.tubs_api_key:
+        log.info("Using TUBS backend: model=%s", settings.tubs_model)
+        app.state.llm = TUBSClient(settings)
     elif settings.gemini_api_key:
         log.info("Using Gemini backend: model=%s", settings.gemini_model)
         app.state.llm = GeminiClient(settings)
