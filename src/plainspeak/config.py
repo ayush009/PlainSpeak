@@ -22,7 +22,7 @@ class Settings(BaseSettings):
 
     # Gemini (Google AI Studio — https://aistudio.google.com — free, 1500 req/day)
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-2.0-flash"
+    gemini_model: str = "gemini-1.5-flash"
 
     # Groq (free cloud inference — https://console.groq.com)
     groq_api_key: str = ""
