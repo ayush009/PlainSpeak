@@ -6,7 +6,7 @@
 
 PlainSpeak is a full-stack clinical AI platform that transforms discharge instructions into grounded, voice-accessible care guidance. It captures the consultation, combines it with the discharge document, and generates a clinician-approved care plan that patients and caregivers can ask questions about at home — in plain language, 24/7.
 
-**Runs entirely with a free local AI (Ollama) — no API key required.**
+**Multiple free AI backends supported — GPT-4o via TU Braunschweig KI-Toolbox, Gemini, Groq, Ollama, and more.**
 
 ---
 
@@ -25,7 +25,7 @@ Patients leave hospital with dense discharge documents they don't fully understa
 
 ## Live Demo (no API key needed)
 
-The app ships with a built-in demo patient — **no Ollama or Claude required** to see it working:
+The app ships with a built-in demo patient — **no AI backend required** to explore the full UI:
 
 1. Start the server: `python -m plainspeak.main`
 2. Open [http://localhost:3001](http://localhost:3001)
@@ -42,7 +42,8 @@ This loads **Emily Carter** — a post-cholecystectomy patient — with 14 consu
 Three-step clinician workflow:
 
 **Step 1 — Capture the Consultation**
-- Live voice transcription via Reson8 WebSocket API with real-time waveform visualisation
+- **Live voice transcription** via browser Web Speech API — no API key or server needed; works in Chrome, Edge, and Safari
+- Speaker toggle during recording (Clinician / Patient) so each captured line gets the correct role
 - Upload a written transcript PDF — auto-parsed and split into speaker turns
 - Manual line-by-line entry for offline environments
 - Paste a full conversation and auto-detect speakers (Clinician / Patient)
@@ -53,7 +54,7 @@ Three-step clinician workflow:
 - Patient name auto-detected from the document
 
 **Step 3 — AI-Assisted Review & Approval**
-- One-click draft generation (works with Claude or local Ollama)
+- One-click draft generation (Claude, GPT-4o via TUBS, Gemini, Groq, or Ollama)
 - AI produces a plain-language summary + source-linked care checklist
 - Clinician edits the draft: modify tasks, adjust timing, add/remove steps
 - Clinician approval signs the version with their name — stored immutably
@@ -64,6 +65,7 @@ Three-step clinician workflow:
 Unlocks only after a clinician approves the care plan:
 
 - **Contextual Q&A chat** — answers grounded strictly in the approved plan with source citations
+- **Voice input** — tap "Start speaking" to ask questions hands-free; the AI reply is automatically read aloud so the whole interaction is voice-driven
 - **Suggested questions** — auto-generated from care task keywords (medications, diet, wound care, follow-up appointments)
 - **Task confirmation** — caregivers mark tasks as done / in-progress / blocked
 - **Unresolved question tracking** — questions the AI can't answer confidently are flagged for clinical follow-up
@@ -77,7 +79,7 @@ Unlocks only after a clinician approves the care plan:
 ### UI Highlights
 
 - **Enterprise dark health-tech design** — premium CSS design system
-- **AI backend badge** — live topbar pill showing `Ollama · llama3.1` (amber) or `Claude · model` (green)
+- **AI backend badge** — live topbar pill showing `GPT-4o · TUBS`, `Gemini · flash`, `Groq · llama-3.3-70b`, etc.
 - **Top progress bar** — 2px gradient bar animated during every API call
 - **Notification centre** — real-time alerts for state changes
 - **Keyboard shortcuts** — `Ctrl+K` to focus chat, number keys for tab switching
@@ -89,52 +91,74 @@ Unlocks only after a clinician approves the care plan:
 
 ## AI Backends
 
-### Groq — Free Cloud Inference (recommended for deployment)
+Backends are tried in this priority order. Set the first key that applies and the rest are ignored.
 
-The fastest way to get a live public URL working with real AI — Groq is free, requires no credit card, and is faster than most cloud models.
+### 1. TU Braunschweig KI-Toolbox — GPT-4o (recommended for TUBS students)
+
+Free GPT-4o access for TU Braunschweig students via the university AI portal.
 
 ```env
-GROQ_API_KEY=gsk_your-key-here
-GROQ_MODEL=llama-3.1-70b-versatile
+TUBS_API_KEY=your-tubs-token
+TUBS_MODEL=gpt-4o
 ```
 
-**Setup (2 minutes):**
-1. Sign up free at [console.groq.com](https://console.groq.com)
-2. Create an API key
-3. Set `GROQ_API_KEY` in your Railway environment variables
+**Setup:** Log in at [ki-toolbox.tu-braunschweig.de](https://ki-toolbox.tu-braunschweig.de), copy your API token from the portal, and set `TUBS_API_KEY`.
 
-**Free Groq models:**
-
-| Model | Notes |
-|---|---|
-| `llama-3.1-70b-versatile` | Best quality (default) |
-| `llama-3.1-8b-instant` | Fastest response time |
-| `mixtral-8x7b-32768` | Largest context window |
-
-The topbar badge shows **Groq · llama-3.1-70b** in violet when active.
+The topbar badge shows **GPT-4o · TUBS** in violet when active.
 
 ---
 
-### Ollama — Local, Free, No API Key (recommended for development)
+### 2. Gemini — Google AI Studio (1 500 req/day free)
 
 ```env
-USE_OLLAMA=true
+GEMINI_API_KEY=your-key
+GEMINI_MODEL=gemini-2.0-flash
+```
+
+**Setup:** Create a free key at [aistudio.google.com](https://aistudio.google.com). No credit card required.
+
+---
+
+### 3. Groq — Free Cloud Inference
+
+Fast, free inference via Groq Cloud. Good fallback when other keys aren't available.
+
+```env
+GROQ_API_KEY=gsk_your-key-here
+GROQ_MODEL=llama-3.3-70b-versatile
+```
+
+**Setup:** Sign up free at [console.groq.com](https://console.groq.com).
+
+| Model | Notes |
+|---|---|
+| `llama-3.3-70b-versatile` | Best quality (default) |
+| `llama-3.1-8b-instant` | Fastest response time |
+
+---
+
+### 4. OpenRouter — Free Fallback
+
+```env
+OPENROUTER_API_KEY=sk-or-v1-...
+OPENROUTER_MODEL=meta-llama/llama-3.1-70b-instruct:free
+```
+
+---
+
+### 5. Ollama — Local, No API Key (recommended for development)
+
+```env
+# No key needed — Ollama runs locally
+OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=llama3.1
 ```
 
-Runs entirely on your machine. No data leaves. Uses Ollama's OpenAI-compatible `/v1/chat/completions` endpoint.
-
-**Setup:**
 ```bash
-# 1. Install Ollama: https://ollama.ai
-# 2. Pull a model
+# Install Ollama: https://ollama.ai
 ollama pull llama3.1
-
-# 3. Start Ollama (keep running in background)
 ollama serve
 ```
-
-**Recommended models:**
 
 | Model | Size | Notes |
 |---|---|---|
@@ -143,16 +167,16 @@ ollama serve
 | `mistral:7b` | ~4 GB | Fast, reliable |
 | `phi3.5:mini` | ~2 GB | Smallest, good for low-RAM machines |
 
-### Anthropic Claude — Cloud (optional, for production)
+---
+
+### 6. Anthropic Claude — Cloud
 
 ```env
 ANTHROPIC_API_KEY=sk-ant-your-key-here
-ANTHROPIC_MODEL=claude-opus-4-5
+ANTHROPIC_MODEL=claude-sonnet-4-6
 ```
 
-Get a key at [console.anthropic.com](https://console.anthropic.com). Leave blank to auto-use Ollama.
-
-**Auto-selection:** if `ANTHROPIC_API_KEY` is empty, Ollama is used automatically.
+Claude is the only backend that supports the full tool-calling agent loop for post-care chat. All other backends use a single-turn direct path that is faster and equally accurate for this use case.
 
 ---
 
@@ -162,9 +186,9 @@ Get a key at [console.anthropic.com](https://console.anthropic.com). Leave blank
 ┌─────────────────────────────────────────────────────┐
 │                   Browser (SPA)                     │
 │  app.js · consultation.js · enhancements.js         │
-│  styles.css (6500+ lines) · index.html (PWA)        │
+│  styles.css · index.html (PWA)                      │
 └──────────────────────┬──────────────────────────────┘
-                       │ HTTP JSON / WebSocket
+                       │ HTTP JSON
 ┌──────────────────────▼──────────────────────────────┐
 │               FastAPI + Uvicorn                     │
 │  api.py — REST endpoints (/api/*)                   │
@@ -178,11 +202,11 @@ Get a key at [console.anthropic.com](https://console.anthropic.com). Leave blank
 │(no DB)  │    │ summary.py   │  │ import.py   │
 └─────────┘    │ prompts.py   │  └─────────────┘
                └──────┬───────┘
-                ┌─────┴──────┐
-         ┌──────▼───┐  ┌─────▼──────┐
-         │  Claude  │  │   Ollama   │
-         │  (cloud) │  │  (local)   │
-         └──────────┘  └────────────┘
+        ┌─────────────┼──────────────┐
+  ┌─────▼───┐  ┌──────▼──────┐  ┌───▼──────┐
+  │  TUBS   │  │   Gemini    │  │  Groq /  │
+  │ GPT-4o  │  │  (Google)   │  │  Ollama  │
+  └─────────┘  └─────────────┘  └──────────┘
 ```
 
 ### Key Design Decisions
@@ -193,8 +217,10 @@ Get a key at [console.anthropic.com](https://console.anthropic.com). Leave blank
 | Clinician approval gate | AI drafts are never shown directly to patients |
 | Source-linked answers | Every chat response cites the specific passage it came from |
 | Unresolved question tracking | Honest about what the AI doesn't know |
-| Dual AI backend (Claude + Ollama) | No vendor lock-in; runs free locally |
-| Tool-calling agent loop | Post-care Q&A uses up to 6 LLM turns with context + progress tools |
+| Multi-backend AI chain | TUBS → Gemini → Groq → OpenRouter → Ollama → Claude; no vendor lock-in |
+| Direct single-turn path for non-Claude | Removes tool-calling confusion on models that don't support it; faster responses |
+| Browser Web Speech API for voice | No API key, no WebSocket server — works in any HTTPS context |
+| Auto-speak AI replies after voice input | Fully hands-free loop: speak → AI answers → AI speaks back |
 | Input revision guard | If documents change after approval, a fresh draft is required |
 
 ---
@@ -204,6 +230,7 @@ Get a key at [console.anthropic.com](https://console.anthropic.com). Leave blank
 | Layer | Technology |
 |---|---|
 | **Backend** | Python 3.12, FastAPI, Uvicorn |
+| **AI (free cloud)** | GPT-4o via TUBS, Gemini (Google), Groq, OpenRouter |
 | **AI (local)** | Ollama — llama3.1, qwen2.5, mistral, phi3.5 |
 | **AI (cloud)** | Anthropic Claude API |
 | **PDF parsing** | pypdf (text extraction + passage indexing) |
@@ -211,8 +238,9 @@ Get a key at [console.anthropic.com](https://console.anthropic.com). Leave blank
 | **Config** | pydantic-settings (.env loading) |
 | **Storage** | JSON files on disk (no database) |
 | **Frontend** | Vanilla JS (ES2022), no framework |
-| **CSS** | Custom design system (dark health-tech, 6500+ lines) |
-| **Voice** | Reson8 WebSocket API + Web Audio API |
+| **CSS** | Custom design system (dark health-tech) |
+| **Voice (consultation)** | Browser Web Speech API — continuous capture with speaker toggle |
+| **Voice (chat)** | Browser Web Speech API (input) + SpeechSynthesis (output) |
 | **Container** | Docker multi-stage build |
 | **Package manager** | uv |
 
@@ -230,22 +258,21 @@ PlainSpeak/
 │   ├── storage.py           # JSON case store + file management
 │   ├── pdf_extract.py       # PDF text extraction + patient name detection
 │   ├── transcript_import.py # Transcript PDF parsing + speaker auto-detection
-│   ├── voice.py             # Reson8 voice token relay
 │   ├── ai/
-│   │   ├── client.py        # ClaudeClient + OllamaClient (shared LLM Protocol)
-│   │   ├── agent.py         # Post-care chat agent (tool-calling loop, max 6 turns)
+│   │   ├── client.py        # TUBSClient, GeminiClient, GroqClient, OllamaClient, ClaudeClient
+│   │   ├── agent.py         # Post-care chat agent (tool loop for Claude; direct path for others)
 │   │   ├── summary.py       # AI draft generation
 │   │   ├── prompts.py       # System prompts + JSON output schemas
 │   │   └── tools.py         # Agent tools: get_case_context, record_progress_update
 │   └── static/
-│       ├── index.html       # Single-page app shell (~1700 lines)
-│       ├── styles.css       # Full design system (6500+ lines)
-│       ├── app.js           # Core app logic, case management, rendering
-│       ├── consultation.js  # Real-time consultation capture module
-│       ├── enhancements.js  # PDF export, TTS, neural background, animations
+│       ├── index.html       # Single-page app shell
+│       ├── styles.css       # Full design system (dark health-tech)
+│       ├── app.js           # Core app logic, case management, rendering, voice input/output
+│       ├── consultation.js  # Live consultation capture (Web Speech API + speaker toggle)
+│       ├── enhancements.js  # PDF export, TTS (SpeechSynthesis), animations
 │       ├── favicon.svg      # SVG chat-bubble favicon
 │       └── manifest.json    # PWA manifest
-├── Dockerfile               # Multi-stage production build (non-root, ~slim)
+├── Dockerfile               # Multi-stage production build (non-root, slim)
 ├── docker-compose.yml       # Container orchestration with data volume
 ├── pyproject.toml           # Python dependencies + build config (uv)
 ├── .env.example             # Configuration reference (copy to .env)
@@ -260,7 +287,6 @@ PlainSpeak/
 
 - Python 3.12+
 - [uv](https://docs.astral.sh/uv/) — fast Python package manager
-- [Ollama](https://ollama.ai) running locally (free, no API key)
 
 ### 1. Clone & install
 
@@ -270,21 +296,15 @@ cd PlainSpeak
 uv sync
 ```
 
-### 2. Start Ollama
-
-```bash
-ollama pull llama3.1
-ollama serve
-```
-
-### 3. Configure
+### 2. Configure
 
 ```bash
 cp .env.example .env
-# The defaults use Ollama — no edits needed to get started
+# Set at least one AI key (TUBS_API_KEY, GEMINI_API_KEY, GROQ_API_KEY…)
+# Or install Ollama locally and leave all cloud keys empty
 ```
 
-### 4. Run
+### 3. Run
 
 ```bash
 python -m plainspeak.main
@@ -302,8 +322,8 @@ Open [http://localhost:3001](http://localhost:3001) and click **"Load Demo Patie
 # Build and start
 docker compose up
 
-# With Claude API key
-ANTHROPIC_API_KEY=sk-ant-... docker compose up
+# With a free Groq key
+GROQ_API_KEY=gsk_... docker compose up
 ```
 
 App is available at [http://localhost:8080](http://localhost:8080)
@@ -370,13 +390,18 @@ awaiting_review  →  approved  →  post_care_active
 
 | Variable | Default | Description |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | *(empty)* | Claude API key — leave blank to use Ollama |
-| `ANTHROPIC_MODEL` | `claude-opus-4-5` | Claude model ID |
-| `ANTHROPIC_EFFORT` | `medium` | Reasoning effort: `low` / `medium` / `high` / `max` |
-| `USE_OLLAMA` | `true` | Force Ollama backend |
+| `TUBS_API_KEY` | *(empty)* | TU Braunschweig KI-Toolbox token (GPT-4o, free for TUBS students) |
+| `TUBS_MODEL` | `gpt-4o` | Model served by TUBS portal |
+| `GEMINI_API_KEY` | *(empty)* | Google AI Studio key (Gemini, 1 500 req/day free) |
+| `GEMINI_MODEL` | `gemini-2.0-flash` | Gemini model ID |
+| `GROQ_API_KEY` | *(empty)* | Groq Cloud key (free tier) |
+| `GROQ_MODEL` | `llama-3.3-70b-versatile` | Groq model ID |
+| `OPENROUTER_API_KEY` | *(empty)* | OpenRouter key (free models available) |
+| `OPENROUTER_MODEL` | `meta-llama/llama-3.1-70b-instruct:free` | OpenRouter model ID |
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server URL |
-| `OLLAMA_MODEL` | `llama3.1` | Local model to use |
-| `RESON8_API_KEY` | *(empty)* | Voice transcription key (optional) |
+| `OLLAMA_MODEL` | `llama3.1` | Local Ollama model |
+| `ANTHROPIC_API_KEY` | *(empty)* | Claude API key |
+| `ANTHROPIC_MODEL` | `claude-sonnet-4-6` | Claude model ID |
 | `PORT` | `3001` | HTTP server port |
 | `HOST` | `127.0.0.1` | Bind address (`0.0.0.0` for Docker/cloud) |
 | `APP_ENV` | `development` | `development` or `production` |
@@ -388,7 +413,7 @@ awaiting_review  →  approved  →  post_care_active
 ## Development
 
 ```bash
-# Install with dev tools (pytest, ruff, fpdf2)
+# Install with dev tools (pytest, ruff)
 uv sync --group dev
 
 # Run tests
@@ -407,7 +432,7 @@ uv run ruff format src/
 
 Built as a demonstration of how AI can be safely deployed in healthcare — not to replace clinicians, but to extend the care they provide beyond the appointment.
 
-**Stack:** Python · FastAPI · Ollama · Anthropic Claude · Vanilla JS · Docker
+**Stack:** Python · FastAPI · GPT-4o / Gemini / Groq / Ollama · Anthropic Claude · Vanilla JS · Docker
 
 **Author:** Ayush Juyal — M.Sc. Data Science | ML & NLP | [github.com/ayush009](https://github.com/ayush009)
 
