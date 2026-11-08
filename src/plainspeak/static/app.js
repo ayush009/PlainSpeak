@@ -1170,15 +1170,18 @@ async function fetchBackendInfo() {
       badge.title = `AI · ${info.model}`;
       if (draftBtn) draftBtn.innerHTML = '<span>✦</span> Generate draft with AI';
     }
-    // If browser doesn't support Web Speech API, disable the mic button
+    // Speech API availability check
     if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
+      // Disable Care @ Home mic button
       const micBtn = document.getElementById('btn-mic');
       if (micBtn) {
         micBtn.disabled = true;
         micBtn.title = 'Voice not supported in this browser — use Chrome or Edge';
-        micBtn.style.opacity = '0.45';
-        micBtn.style.cursor = 'not-allowed';
+        micBtn.classList.add('btn-disabled');
       }
+      // Show note in consultation panel
+      const note = document.getElementById('speech-browser-note');
+      if (note) note.hidden = false;
     }
   } catch (_) {}
 }

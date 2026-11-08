@@ -804,6 +804,7 @@ main { max-width: 1500px; margin: 0 auto; padding: 30px 36px 28px; }
   color: #fff; transform: translateY(-1px);
 }
 .button-primary:active:not(:disabled) { transform: translateY(0); }
+.btn-disabled { opacity: 0.45; cursor: not-allowed; }
 .button-secondary {
   border: 1px solid rgba(255,255,255,.1);
   background: rgba(255,255,255,.05);
@@ -1236,6 +1237,78 @@ input[type=file]::file-selector-button:hover { background: rgba(139,126,245,.25)
 .fallback-details summary:hover { color: var(--violet); }
 .fallback-details p { margin: 10px 0; font-size: 11px; }
 .fallback-details code { font: 10px ui-monospace, monospace; color: var(--violet); background: rgba(139,126,245,.1); padding: 2px 6px; border-radius: 5px; }
+
+/* ===== HERO VISUAL (replaces floating vitals + AI sphere) ===== */
+.hero-visual {
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  opacity: 0.75;
+}
+.hero-doc-card {
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+  border-radius: 14px; padding: 18px 24px; width: 220px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.hdc-bar { height: 10px; border-radius: 6px; background: rgba(139,126,245,.35); }
+.hdc-bar-1 { width: 85%; }
+.hdc-bar-2 { width: 60%; }
+.hdc-bar-3 { width: 72%; }
+.hdc-tick { font-size: 0.72rem; letter-spacing: 0.06em; color: var(--mint, #0DD6A8); margin-top: 4px; }
+.hero-chat-bubble {
+  display: flex; gap: 5px; align-items: center;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08);
+  border-radius: 20px; padding: 10px 18px;
+}
+.hcb-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: rgba(139,126,245,.6);
+  animation: hcb-pulse 1.4s ease-in-out infinite;
+}
+.hcb-dot:nth-child(2) { animation-delay: 0.2s; }
+.hcb-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes hcb-pulse { 0%, 80%, 100% { transform: scale(1); opacity: .5; } 40% { transform: scale(1.4); opacity: 1; } }
+
+/* ===== AI STATUS PANEL (replaces holo-face) ===== */
+.ai-status-panel {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 18px; margin-bottom: 20px;
+  background: rgba(139,126,245,.06); border: 1px solid rgba(139,126,245,.12);
+  border-radius: 12px;
+}
+.ai-status-waves { display: flex; gap: 3px; align-items: flex-end; height: 18px; }
+.ai-status-waves span {
+  width: 3px; border-radius: 2px; background: rgba(139,126,245,.4);
+  transition: background .3s, height .3s;
+}
+.ai-status-waves span:nth-child(1) { height: 6px; }
+.ai-status-waves span:nth-child(2) { height: 10px; }
+.ai-status-waves span:nth-child(3) { height: 14px; }
+.ai-status-waves span:nth-child(4) { height: 10px; }
+.ai-status-waves span:nth-child(5) { height: 6px; }
+[data-state="thinking"] .ai-status-waves span {
+  background: var(--violet, #8B7EF5);
+  animation: ai-think .9s ease-in-out infinite;
+}
+[data-state="thinking"] .ai-status-waves span:nth-child(2) { animation-delay: .15s; }
+[data-state="thinking"] .ai-status-waves span:nth-child(3) { animation-delay: .3s; }
+[data-state="thinking"] .ai-status-waves span:nth-child(4) { animation-delay: .15s; }
+[data-state="speaking"] .ai-status-waves span {
+  background: var(--mint, #0DD6A8);
+  animation: ai-speak .5s ease-in-out infinite alternate;
+}
+[data-state="speaking"] .ai-status-waves span:nth-child(2) { animation-delay: .08s; }
+[data-state="speaking"] .ai-status-waves span:nth-child(3) { animation-delay: .16s; }
+[data-state="speaking"] .ai-status-waves span:nth-child(4) { animation-delay: .08s; }
+@keyframes ai-think { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }
+@keyframes ai-speak { from { height: 5px; } to { height: 18px; } }
+.ai-status-text {
+  font-size: 0.75rem; font-weight: 600; letter-spacing: .06em; color: var(--muted, #666);
+  transition: color .3s;
+}
+[data-state="thinking"] .ai-status-text { color: var(--violet, #8B7EF5); }
+[data-state="speaking"] .ai-status-text { color: var(--mint, #0DD6A8); }
+
+/* ===== SPEECH BROWSER NOTE ===== */
+.speech-browser-note { font-size: 0.78rem; margin: 4px 0 0; }
 
 /* ===== SPEECH ===== */
 .interim { min-height: 20px; color: var(--violet); font-size: 12px; font-style: italic; margin: 8px 0; }

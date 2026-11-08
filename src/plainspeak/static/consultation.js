@@ -147,10 +147,6 @@ async function startConsultation() {
   consultation.sessionId = crypto.randomUUID();
 
   try {
-    // Request mic permission explicitly so the browser shows a clear prompt
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    stream.getTracks().forEach((t) => t.stop());
-
     const recognition = new SpeechRecognition();
     const lang = $("#consult-language").value;
     recognition.lang = lang === "de" || lang === "de,en" ? "de-DE" : "en-US";
@@ -188,6 +184,11 @@ async function startConsultation() {
 
     recognition.onerror = (event) => {
       if (event.error === "no-speech" || event.error === "aborted") return;
+      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+        closeConsultationCapture();
+        $("#consult-status").textContent = "Microphone access denied. Check browser permissions and try again.";
+        return;
+      }
       closeConsultationCapture();
       showError(`Voice error: ${event.error}. Use manual entry below.`);
     };
@@ -199,8 +200,9 @@ async function startConsultation() {
       }
     };
 
-    recognition.start();
+    // Set recognition reference before .start() so the onend auto-restart has it
     consultation.recognition = recognition;
+    recognition.start();
     consultation.active = true;
     consultation.starting = false;
 
@@ -210,10 +212,6 @@ async function startConsultation() {
     renderConsultationControls();
   } catch (err) {
     closeConsultationCapture();
-    if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError" || err.name === "NotFoundError") {
-      $("#consult-status").textContent = "Microphone access denied. Use manual entry below.";
-      return;
-    }
     throw err;
   }
 }

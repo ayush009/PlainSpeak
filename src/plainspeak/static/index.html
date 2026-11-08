@@ -256,68 +256,22 @@
             </div>
           </div>
           <div class="intro-decoration" aria-hidden="true">
-            <!-- Floating health vitals -->
-            <div class="vital-float vf1" style="--dur:5.2s;--delay:0s">
-              <span class="vf-icon" style="color:#F2637A">♥</span>
-              <span class="vf-val" id="vf-bpm">72</span>
-              <span class="vf-label">BPM</span>
-            </div>
-            <div class="vital-float vf2" style="--dur:4.7s;--delay:1.6s">
-              <span class="vf-icon" style="color:#0DD6A8">◎</span>
-              <span class="vf-val"><span id="vf-spo2">98</span><small>%</small></span>
-              <span class="vf-label">SpO2</span>
-            </div>
-            <div class="vital-float vf3" style="--dur:6.1s;--delay:0.9s">
-              <span class="vf-icon" style="color:#8B7EF5">↑</span>
-              <span class="vf-val" id="vf-bp">120</span>
-              <span class="vf-label">SYS mmHg</span>
-            </div>
-
-            <!-- AI Sphere focal point -->
-            <div class="ai-sphere-wrap">
-              <div class="ai-ring ai-ring-1"></div>
-              <div class="ai-ring ai-ring-2"></div>
-              <div class="ai-orb-shell"><div class="ai-orb-core"></div></div>
-              <div class="ekg-box">
-                <svg class="ekg-svg" viewBox="0 0 280 70" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-                  <defs>
-                    <linearGradient id="ekgGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stop-color="#8B7EF5" stop-opacity="0"/>
-                      <stop offset="30%" stop-color="#8B7EF5" stop-opacity="1"/>
-                      <stop offset="70%" stop-color="#0DD6A8" stop-opacity="1"/>
-                      <stop offset="100%" stop-color="#0DD6A8" stop-opacity="0"/>
-                    </linearGradient>
-                  </defs>
-                  <path class="ekg-path" d="M0,35 L60,35 L74,8 L88,62 L102,18 L116,52 L130,35 L280,35" stroke="url(#ekgGrad)"/>
-                </svg>
-                <div class="ekg-rings">
-                  <div class="ekg-ring r1"></div>
-                  <div class="ekg-ring r2"></div>
-                  <div class="ekg-ring r3"></div>
-                  <div class="ekg-core"></div>
-                </div>
+            <div class="hero-visual">
+              <div class="hero-doc-card">
+                <div class="hdc-bar hdc-bar-1"></div>
+                <div class="hdc-bar hdc-bar-2"></div>
+                <div class="hdc-bar hdc-bar-3"></div>
+                <div class="hdc-tick">✓ Clinician approved</div>
+              </div>
+              <div class="hero-chat-bubble">
+                <span class="hcb-dot"></span>
+                <span class="hcb-dot"></span>
+                <span class="hcb-dot"></span>
               </div>
             </div>
           </div>
         </section>
 
-        <!-- ===== HERO STATS STRIP ===== -->
-        <div class="hero-stats">
-          <div class="hstat">
-            <div class="hstat-top"><span class="hstat-n hstat-big" data-target="98">0</span><span>%</span></div>
-            <small data-i18n="stat-accuracy">Accuracy</small>
-          </div>
-          <div class="hstat-div"></div>
-          <div class="hstat">
-            <div class="hstat-top"><span class="hstat-n hstat-big" data-target="3">0</span><span>x</span></div>
-            <small data-i18n="stat-faster">Faster</small>
-          </div>
-          <div class="hstat-div"></div>
-          <div class="hstat">
-            <div class="hstat-top"><span class="hstat-n hstat-big" data-target="24">0</span><span>/7</span></div>
-            <small data-i18n="stat-always">Always On</small>
-          </div>
-        </div>
 
         <!-- ===== DOCTOR TAB ===== -->
         <section id="tab-doctor" class="panel active">
@@ -377,6 +331,9 @@
                   <button id="btn-consult-start" class="button-primary"><span>◉</span> Start consultation</button>
                   <button id="btn-consult-stop" class="button-secondary" disabled>End &amp; save</button>
                 </div>
+                <p id="speech-browser-note" class="speech-browser-note muted" hidden>
+                  🎙 Voice capture requires Chrome, Edge, or Safari — or use manual entry below.
+                </p>
                 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
                   <div id="consult-status" class="muted status-line" role="status">Ready when you are.</div>
                   <span id="record-timer" class="record-timer" aria-live="polite">
@@ -528,62 +485,12 @@
             <div class="caregiver-grid">
               <div class="primary-column">
                 <article class="card">
-                  <!-- HOLOGRAPHIC AI FACE AVATAR -->
-                  <div class="holo-container" id="holo-container" data-state="idle">
-                    <div class="holo-particles" aria-hidden="true">
-                      <span class="hp hp1"></span><span class="hp hp2"></span>
-                      <span class="hp hp3"></span><span class="hp hp4"></span>
-                      <span class="hp hp5"></span><span class="hp hp6"></span>
-                      <span class="hp hp7"></span><span class="hp hp8"></span>
-                    </div>
-                    <div class="holo-hud-bar" aria-hidden="true">
-                      <span class="hud-chip">PLAINSPEAK AI</span>
-                      <span class="hud-pulse">◉</span>
-                      <span class="hud-chip hud-chip-right">ONLINE</span>
-                    </div>
-                    <div class="holo-face-wrap">
-                      <div class="holo-atm holo-atm-r1" aria-hidden="true"></div>
-                      <div class="holo-atm holo-atm-r2" aria-hidden="true"></div>
-                      <div class="holo-atm holo-atm-r3" aria-hidden="true"></div>
-                      <div class="holo-face-glow" aria-hidden="true"></div>
-                      <div class="holo-face">
-                        <div class="holo-eyes">
-                          <div class="holo-eye holo-eye-l">
-                            <div class="eye-brow" aria-hidden="true"></div>
-                            <div class="eye-socket">
-                              <div class="eye-iris">
-                                <div class="eye-pupil"><div class="eye-shine"></div></div>
-                              </div>
-                              <div class="eye-gleam" aria-hidden="true"></div>
-                            </div>
-                          </div>
-                          <div class="holo-eye holo-eye-r">
-                            <div class="eye-brow" aria-hidden="true"></div>
-                            <div class="eye-socket">
-                              <div class="eye-iris">
-                                <div class="eye-pupil"><div class="eye-shine"></div></div>
-                              </div>
-                              <div class="eye-gleam" aria-hidden="true"></div>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="holo-nose" aria-hidden="true"></div>
-                        <div class="holo-mouth" role="presentation">
-                          <div class="mouth-lips" aria-hidden="true"></div>
-                          <div class="mouth-cavity" aria-hidden="true"></div>
-                        </div>
-                        <div class="holo-scan" aria-hidden="true"></div>
-                      </div>
-                    </div>
-                    <div class="holo-bars" aria-hidden="true">
-                      <span></span><span></span><span></span><span></span><span></span>
-                      <span></span><span></span><span></span><span></span><span></span>
+                  <!-- AI status indicator -->
+                  <div class="ai-status-panel" id="holo-container" data-state="idle">
+                    <div class="ai-status-waves" aria-hidden="true">
                       <span></span><span></span><span></span><span></span><span></span>
                     </div>
-                    <div class="holo-status-row">
-                      <span class="holo-dot" aria-hidden="true"></span>
-                      <span class="holo-status-text" id="holo-status-text">Ready to help</span>
-                    </div>
+                    <span class="ai-status-text" id="holo-status-text">Ready to help</span>
                   </div>
                   <div class="card-heading">
                     <div class="step-icon violet">✦</div>
