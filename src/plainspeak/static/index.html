@@ -35,19 +35,6 @@
     </div>
   </div>
 
-  <!-- Neural network canvas - behind everything -->
-  <canvas id="neural-bg" aria-hidden="true"></canvas>
-
-  <!-- Cursor spotlight -->
-  <div class="cursor-spotlight" aria-hidden="true"></div>
-
-  <!-- Ambient gradient orbs -->
-  <div class="bg-mesh" aria-hidden="true">
-    <div class="bg-orb orb-v"></div>
-    <div class="bg-orb orb-t"></div>
-    <div class="bg-orb orb-p"></div>
-  </div>
-
   <div class="sidebar-backdrop" id="sidebar-backdrop" aria-hidden="true"></div>
   <div class="app-shell">
     <!-- ===== SIDEBAR ===== -->
@@ -144,17 +131,6 @@
     <!-- ===== MAIN ===== -->
     <div class="main-shell">
       <header class="topbar">
-        <!-- Compliance strip -->
-        <div class="topbar-compliance" role="complementary" aria-label="Platform compliance">
-          <div class="tc-badges">
-            <span class="tc-badge"><span class="tc-dot"></span>HIPAA</span>
-            <span class="tc-badge"><span class="tc-dot"></span>TLS 1.3</span>
-            <span class="tc-badge"><span class="tc-dot"></span>AES-256</span>
-            <span class="tc-badge tc-hide-sm"><span class="tc-dot"></span>SOC 2</span>
-            <span class="tc-badge tc-hide-sm"><span class="tc-dot"></span>GDPR</span>
-          </div>
-          <span class="tc-status" id="system-status"><span class="tc-live"></span><span class="tc-status-text">All systems operational</span></span>
-        </div>
         <!-- Main topbar row -->
         <div class="topbar-main">
           <button type="button" class="sidebar-toggle-btn" id="btn-sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false">
@@ -196,7 +172,6 @@
               <span class="lang-sep">|</span>
               <button type="button" class="lang-btn" data-lang="de">DE</button>
             </div>
-            <span class="secure-label"><span class="secure-dot"></span> SECURE</span>
             <span class="ai-badge" id="ai-badge" title="Active AI backend">
               <span class="ai-badge-dot"></span>
               <span id="ai-badge-text">AI</span>
@@ -246,8 +221,8 @@
         <!-- ===== HERO ===== -->
         <section class="page-intro">
           <div class="intro-text">
-            <div class="eyebrow"><span class="eyebrow-line"></span><span data-i18n="eyebrow-hero"> AI-POWERED CARE INTELLIGENCE</span></div>
-            <h1 id="page-title" class="gradient-text" data-i18n-html="page-title">Care, made <em>clearer.</em></h1>
+            <div class="eyebrow"><span class="eyebrow-line"></span><span data-i18n="eyebrow-hero"> CLINICAL CARE PLATFORM</span></div>
+            <h1 id="page-title" data-i18n-html="page-title">Care, made <em>clearer.</em></h1>
             <p class="page-subtitle" data-i18n="page-subtitle">Bridging clinical expertise and everyday understanding — from the consultation room all the way home.</p>
             <div class="hero-tags">
               <span class="hero-tag"><span class="htag-dot green-dot"></span><span data-i18n="tag-clinician">Clinician-approved</span></span>
@@ -765,165 +740,6 @@
       document.getElementById('crumb-current').textContent = labels[tab.dataset.tab];
       document.getElementById('page-title').innerHTML = titles[tab.dataset.tab];
     }));
-
-    /* ── Neural network — mouse-attracted, click ripple, dual colour ── */
-    (function () {
-      const canvas = document.getElementById('neural-bg');
-      const ctx    = canvas.getContext('2d');
-      let W, H;
-      const mouse   = { x: -9999, y: -9999 };
-      const ripples = [];
-      const NUM = 90, DIST = 155;
-      const dots = [];
-
-      function resize() {
-        W = canvas.width  = window.innerWidth;
-        H = canvas.height = window.innerHeight;
-      }
-      resize();
-      window.addEventListener('resize', resize);
-      document.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
-      document.addEventListener('click',     e => ripples.push({ x: e.clientX, y: e.clientY, r: 0, a: 0.55 }));
-
-      for (let i = 0; i < NUM; i++) {
-        dots.push({
-          x: Math.random() * (W || 1400), y: Math.random() * (H || 900),
-          vx: (Math.random() - 0.5) * 0.3,
-          vy: (Math.random() - 0.5) * 0.3,
-          r:  Math.random() * 1.5 + 0.5,
-          mint: Math.random() > 0.68,
-        });
-      }
-
-      function frame() {
-        ctx.clearRect(0, 0, W, H);
-        for (let i = ripples.length - 1; i >= 0; i--) {
-          const rp = ripples[i];
-          rp.r += 5; rp.a -= 0.013;
-          if (rp.a <= 0) { ripples.splice(i, 1); continue; }
-          ctx.beginPath(); ctx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
-          ctx.strokeStyle = `rgba(139,126,245,${rp.a})`; ctx.lineWidth = 1.5; ctx.stroke();
-          ctx.beginPath(); ctx.arc(rp.x, rp.y, rp.r * 0.55, 0, Math.PI * 2);
-          ctx.strokeStyle = `rgba(13,214,168,${rp.a * 0.5})`; ctx.lineWidth = 1; ctx.stroke();
-        }
-        dots.forEach(d => {
-          const mdx = mouse.x - d.x, mdy = mouse.y - d.y;
-          const md2 = mdx * mdx + mdy * mdy;
-          if (md2 < 40000 && md2 > 0) {
-            const md = Math.sqrt(md2), f = (200 - md) / 200 * 0.018;
-            d.vx += (mdx / md) * f; d.vy += (mdy / md) * f;
-          }
-          const spd = Math.hypot(d.vx, d.vy);
-          if (spd > 1.5) { d.vx *= 1.5 / spd; d.vy *= 1.5 / spd; }
-          d.x += d.vx; d.y += d.vy;
-          if (d.x < 0 || d.x > W) d.vx *= -1;
-          if (d.y < 0 || d.y > H) d.vy *= -1;
-        });
-        for (let i = 0; i < dots.length; i++) {
-          for (let j = i + 1; j < dots.length; j++) {
-            const dx = dots[i].x - dots[j].x, dy = dots[i].y - dots[j].y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < DIST) {
-              const a = (1 - dist / DIST) * 0.2;
-              ctx.beginPath();
-              ctx.strokeStyle = (dots[i].mint && dots[j].mint) ? `rgba(13,214,168,${a})` : `rgba(139,126,245,${a})`;
-              ctx.lineWidth = 0.7;
-              ctx.moveTo(dots[i].x, dots[i].y); ctx.lineTo(dots[j].x, dots[j].y); ctx.stroke();
-            }
-          }
-        }
-        const MGLOW = 180;
-        dots.forEach(d => {
-          const mdx = mouse.x - d.x, mdy = mouse.y - d.y;
-          const md  = Math.sqrt(mdx * mdx + mdy * mdy);
-          const boost = md < MGLOW ? (1 - md / MGLOW) * 3.5 : 0;
-          if (boost > 0.3) {
-            ctx.beginPath(); ctx.arc(d.x, d.y, (d.r + boost) * 3, 0, Math.PI * 2);
-            ctx.fillStyle = d.mint ? 'rgba(13,214,168,.05)' : 'rgba(139,126,245,.05)'; ctx.fill();
-          }
-          ctx.beginPath(); ctx.arc(d.x, d.y, d.r + boost * 0.4, 0, Math.PI * 2);
-          ctx.fillStyle = d.mint ? `rgba(13,214,168,${0.38 + boost * 0.35})` : `rgba(139,126,245,${0.38 + boost * 0.35})`;
-          ctx.fill();
-        });
-        requestAnimationFrame(frame);
-      }
-      frame();
-    })();
-
-    /* ── Cursor spotlight ── */
-    (function () {
-      const spot = document.querySelector('.cursor-spotlight');
-      document.addEventListener('mousemove', e => {
-        spot.style.background =
-          `radial-gradient(circle 700px at ${e.clientX}px ${e.clientY}px,` +
-          `rgba(139,126,245,.06) 0%, rgba(13,214,168,.025) 45%, transparent 70%)`;
-      });
-    })();
-
-    /* ── 3-D card tilt ── */
-    (function () {
-      function attachTilt(el) {
-        if (el.dataset.tilt) return;
-        el.dataset.tilt = '1';
-        el.style.transition = 'transform .15s ease, box-shadow .15s ease';
-        el.addEventListener('mousemove', e => {
-          const r = el.getBoundingClientRect();
-          const x = (e.clientX - r.left) / r.width  - 0.5;
-          const y = (e.clientY - r.top)  / r.height - 0.5;
-          el.style.transform  = `perspective(900px) rotateX(${-y * 7}deg) rotateY(${x * 7}deg) translateZ(10px)`;
-          el.style.boxShadow  =
-            `0 24px 64px rgba(0,0,0,.6),${-x * 28}px ${-y * 28}px 40px rgba(139,126,245,.14),inset 0 1px 0 rgba(255,255,255,.05)`;
-        });
-        el.addEventListener('mouseleave', () => { el.style.transform = ''; el.style.boxShadow = ''; });
-      }
-      document.querySelectorAll('.card, .side-card').forEach(attachTilt);
-      new MutationObserver(() => document.querySelectorAll('.card, .side-card').forEach(attachTilt))
-        .observe(document.body, { childList: true, subtree: true });
-    })();
-
-    /* ── Magnetic primary buttons ── */
-    (function () {
-      function bindMag(btn) {
-        if (btn.dataset.mag) return;
-        btn.dataset.mag = '1';
-        btn.addEventListener('mousemove', e => {
-          const r = btn.getBoundingClientRect();
-          const x = (e.clientX - (r.left + r.width  / 2)) * 0.24;
-          const y = (e.clientY - (r.top  + r.height / 2)) * 0.24;
-          btn.style.transform = `translate(${x}px,${y}px) scale(1.04)`;
-        });
-        btn.addEventListener('mouseleave', () => { btn.style.transform = ''; });
-      }
-      document.querySelectorAll('.button-primary').forEach(bindMag);
-      new MutationObserver(() => document.querySelectorAll('.button-primary').forEach(bindMag))
-        .observe(document.body, { childList: true, subtree: true });
-    })();
-
-    /* ── Hero stat count-up ── */
-    (function () {
-      const els = document.querySelectorAll('.hstat-n');
-      const io  = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-          if (!entry.isIntersecting) return;
-          const el = entry.target, end = parseInt(el.dataset.target, 10);
-          let cur = 0; const step = Math.ceil(end / 40);
-          const iv = setInterval(() => {
-            cur = Math.min(cur + step, end); el.textContent = cur;
-            if (cur >= end) { clearInterval(iv); el.classList.add('hstat-done'); setTimeout(() => el.classList.remove('hstat-done'), 900); }
-          }, 28);
-          io.unobserve(el);
-        });
-      }, { threshold: 0.5 });
-      els.forEach(el => io.observe(el));
-    })();
-
-    /* ── Animated health vitals ── */
-    (function () {
-      const bpmEl = document.getElementById('vf-bpm'), spo2El = document.getElementById('vf-spo2'), bpEl = document.getElementById('vf-bp');
-      if (!bpmEl) return;
-      function update() { bpmEl.textContent = 66 + Math.floor(Math.random() * 12); spo2El.textContent = 96 + Math.floor(Math.random() * 3); bpEl.textContent = 115 + Math.floor(Math.random() * 10); }
-      setInterval(update, 3200);
-    })();
 
     /* ── Language switcher ── */
     (function () {

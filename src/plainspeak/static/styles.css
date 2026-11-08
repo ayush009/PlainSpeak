@@ -63,68 +63,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
   outline-offset: 2px;
 }
 
-/* ===== NEURAL CANVAS ===== */
-#neural-bg {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-}
-
-/* ===== CURSOR SPOTLIGHT ===== */
-.cursor-spotlight {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 3;
-  transition: background .08s linear;
-}
-
-/* ===== AMBIENT BACKGROUND ===== */
-.bg-mesh {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
-}
-.bg-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(90px);
-}
-.orb-v {
-  width: 800px; height: 800px;
-  background: radial-gradient(circle, rgba(124,111,232,.22) 0%, rgba(139,126,245,.06) 50%, transparent 70%);
-  top: -280px; right: -200px;
-  animation: driftA 22s ease-in-out infinite;
-}
-.orb-t {
-  width: 700px; height: 700px;
-  background: radial-gradient(circle, rgba(13,214,168,.16) 0%, rgba(13,214,168,.04) 50%, transparent 70%);
-  bottom: -220px; left: -120px;
-  animation: driftB 28s ease-in-out infinite;
-}
-.orb-p {
-  width: 500px; height: 500px;
-  background: radial-gradient(circle, rgba(139,126,245,.12) 0%, rgba(99,102,241,.04) 50%, transparent 70%);
-  top: 45%; left: 35%;
-  animation: driftC 35s ease-in-out infinite;
-}
-@keyframes driftA {
-  0%,100% { transform: translate(0,0) scale(1); }
-  33% { transform: translate(-60px,70px) scale(1.12); }
-  66% { transform: translate(40px,-40px) scale(0.92); }
-}
-@keyframes driftB {
-  0%,100% { transform: translate(0,0) scale(1); }
-  40% { transform: translate(80px,-60px) scale(1.08); }
-  70% { transform: translate(-50px,30px) scale(1.15); }
-}
-@keyframes driftC {
-  0%,100% { transform: translate(0,0); opacity:.6; }
-  50% { transform: translate(100px,-80px); opacity:.9; }
-}
 
 /* ===== APP SHELL ===== */
 .app-shell {
@@ -6112,12 +6050,6 @@ textarea:focus {
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   background-clip: text !important;
-}
-.gradient-text {
-  background: linear-gradient(135deg, #fff 40%, var(--violet) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 /* -- S. Hero tags -- pill redesign -------------------------- */
