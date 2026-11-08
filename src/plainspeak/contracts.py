@@ -217,6 +217,11 @@ class ApproveRequest(Contract):
     input_revision: int | None = None
 
 
+class TaskProgressRequest(Contract):
+    status: ReportedStatus
+    note: str = ""
+
+
 class ChatRequest(Contract):
     text: str
 

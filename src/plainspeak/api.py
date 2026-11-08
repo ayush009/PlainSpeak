@@ -23,9 +23,12 @@ from plainspeak.contracts import (
     CreateCaseRequest,
     Message,
     Passage,
+    PendingUpdate,
+    ProgressEvent,
     Source,
     SpeakerRole,
     SummaryVersion,
+    TaskProgressRequest,
     TaskView,
     TranscriptRequest,
     TranscriptSegment,
@@ -441,6 +444,54 @@ def chat(case_id: str, body: ChatRequest, store: Store, llm: Claude) -> ChatResp
 
 
 # ── Progress updates ───────────────────────────────────────────────────────────
+
+
+@router.post("/cases/{case_id}/tasks/{task_id}/progress")
+def report_task_progress(
+    case_id: str, task_id: str, body: TaskProgressRequest, store: Store
+) -> CaseView:
+    """Direct caregiver-reported status update — creates and confirms in one atomic write."""
+    case = _load(store, case_id)
+    if not case.post_care_ready():
+        raise HTTPException(409, "No approved care plan to report against.")
+    approved_ver = case.approved()
+    if approved_ver is None or not any(t.id == task_id for t in approved_ver.care_tasks):
+        raise HTTPException(404, "Task not found in the approved care plan.")
+
+    note = body.note.strip() or body.status.replace("_", " ").capitalize()
+    now = utc_now()
+    update_id = new_id("upd")
+
+    with store.update(case_id) as case:
+        approved_ver = case.approved()
+        if approved_ver is None:
+            raise HTTPException(409, "Care plan no longer available.")
+        update = PendingUpdate(
+            id=update_id,
+            task_id=task_id,
+            reported_status=body.status,
+            note=note,
+            approved_summary_version=approved_ver.version,
+            created_at=now,
+        )
+        event = ProgressEvent(
+            id=new_id("evt"),
+            task_id=task_id,
+            status=body.status,
+            note=note,
+            actor="caregiver",
+            timestamp=now,
+            pending_update_id=update_id,
+            approved_summary_version=approved_ver.version,
+        )
+        update.status = "confirmed"
+        update.resolved_at = now
+        case.pending_updates.append(update)
+        case.progress_events.append(event)
+        if case.workflow_state == "approved":
+            case.workflow_state = "post_care_active"
+
+    return _view(store.load(case_id))
 
 
 @router.post("/cases/{case_id}/updates/{update_id}/confirm")

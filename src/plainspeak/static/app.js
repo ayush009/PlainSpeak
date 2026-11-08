@@ -309,14 +309,34 @@ function statusBadge(status) {
 }
 
 function renderChecklist() {
-  const rows = caseView.checklist.map((t) => `
-    <tr>
-      <td>${esc(t.instruction)}</td>
+  const canAct = postCareOpen();
+  const rows = caseView.checklist.map((t) => {
+    const actions = canAct ? `<div class="task-actions">
+      ${t.status !== 'done'        ? `<button class="task-btn task-btn-done"  data-task-id="${esc(t.id)}" data-status="done">✓ Done</button>` : ''}
+      ${t.status !== 'in_progress' ? `<button class="task-btn task-btn-prog"  data-task-id="${esc(t.id)}" data-status="in_progress">↻ In progress</button>` : ''}
+      ${t.status !== 'blocked'     ? `<button class="task-btn task-btn-block" data-task-id="${esc(t.id)}" data-status="blocked">✕ Blocked</button>` : ''}
+    </div>` : '';
+    return `<tr>
+      <td>${esc(t.instruction)}${actions}</td>
       <td>${esc(t.timing ?? "")}</td>
       <td>${esc(t.responsibleParty)}</td>
       <td>${statusBadge(t.status)}${t.lastEvent ? `<div class="muted">${esc(t.lastEvent.actor)}<br>${esc(t.lastEvent.timestamp)}</div>` : ""}</td>
-    </tr>`).join("");
+    </tr>`;
+  }).join("");
   return `<table><tr><th>Task</th><th>Timing</th><th>Who</th><th>Status</th></tr>${rows}</table>`;
+}
+
+async function reportTaskProgress(taskId, status) {
+  setCase(await api(`/api/cases/${CASE_ID}/tasks/${taskId}/progress`, {
+    method: 'POST', json: { status },
+  }));
+  window.toast?.(`Task marked as ${status.replace('_', ' ')}`, 'success');
+}
+
+function wireTaskButtons(container) {
+  container?.querySelectorAll('.task-btn').forEach((btn) => {
+    btn.addEventListener('click', () => run(btn, () => reportTaskProgress(btn.dataset.taskId, btn.dataset.status)));
+  });
 }
 
 function generateSuggestedQuestions(careTasks, summary) {
@@ -608,6 +628,7 @@ function renderCaregiver() {
   }
 
   $("#checklist").innerHTML = renderChecklist();
+  wireTaskButtons($("#checklist"));
 }
 
 // ── session history ───────────────────────────────────────────────────────────
@@ -748,6 +769,7 @@ function renderReport() {
     <h3>Unresolved questions for the care team</h3>
     ${openQs.length ? `<ul class="plain">${openQs.map((q) => `<li>${esc(q.question)} <span class="muted">(${esc(q.createdAt)})</span></li>`).join("")}</ul>` : `<p class="muted">None.</p>`}
   `;
+  wireTaskButtons($("#report"));
 }
 
 // ── case management ───────────────────────────────────────────────────────────

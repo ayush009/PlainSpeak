@@ -1333,6 +1333,20 @@ input[type=file]::file-selector-button:hover { background: rgba(139,126,245,.25)
 .spk-btn { padding: 4px 14px; border-radius: 999px; border: 1.5px solid rgba(139,126,245,.5); background: transparent; color: inherit; cursor: pointer; font-size: 0.82rem; transition: background .15s, color .15s; }
 .spk-btn.spk-active { background: var(--violet, #6c47ff); border-color: var(--violet, #6c47ff); color: #fff; }
 
+/* ===== TASK PROGRESS BUTTONS ===== */
+.task-actions { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+.task-btn {
+  font-size: 0.69rem; padding: 2px 9px; border-radius: 6px;
+  border: 1px solid rgba(255,255,255,.1); background: transparent;
+  cursor: pointer; letter-spacing: .03em; transition: background .15s, border-color .15s;
+}
+.task-btn-done  { border-color: rgba(13,214,168,.35);  color: var(--mint,#0DD6A8); }
+.task-btn-done:hover  { background: rgba(13,214,168,.12); }
+.task-btn-prog  { border-color: rgba(139,126,245,.35); color: var(--violet,#8B7EF5); }
+.task-btn-prog:hover  { background: rgba(139,126,245,.12); }
+.task-btn-block { border-color: rgba(242,99,122,.35);  color: #F2637A; }
+.task-btn-block:hover { background: rgba(242,99,122,.12); }
+
 /* ===== CAREGIVER TAB ===== */
 .locked-card {
   text-align: center; padding: 60px 30px; max-width: 620px; margin: 20px auto;
