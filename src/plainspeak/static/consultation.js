@@ -165,9 +165,10 @@ async function startConsultation() {
           const text = event.results[i][0].transcript.trim();
           if (!text) continue;
           const speakerId = consultation.currentSpeaker;
+          // Only register the role for this specific speaker — the backend
+          // rejects role keys that don't yet have a matching saved segment.
           const roles = {
-            [`${consultation.sessionId}:0`]: "clinician",
-            [`${consultation.sessionId}:1`]: "patient",
+            [`${consultation.sessionId}:${speakerId}`]: speakerId === 0 ? "clinician" : "patient",
           };
           queueConsultationSegment({
             id: `seg_${crypto.randomUUID()}`,
